@@ -1,0 +1,38 @@
+{
+  "name": "docs",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "docs:sync": "tsx scripts/sync-docs.ts",
+    "docs:dispatch": "tsx scripts/trigger-dispatch.ts",
+    "docs:check-changes": "tsx scripts/check-remote-changes.ts",
+    "prebuild": "pnpm docs:sync",
+    "build": "astro build",
+    "deploy:cf": "wrangler pages deploy dist",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.2",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/starlight": "^0.42.6",
+    "astro": "^7.2.10",
+    "astro-mermaid": "^2.1.0",
+    "mermaid": "^11.17.2",
+    "remark-github-blockquote-alert": "^2.1.0",
+    "sharp": "^0.35.3",
+    "starlight-image-zoom": "^0.16.2",
+    "starlight-links-validator": "^0.27.0",
+    "starlight-llms-txt": "^0.12.0",
+    "starlight-sidebar-topics": "^0.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "fast-glob": "^3.3.3",
+    "gray-matter": "^4.0.3",
+    "tsx": "^4.23.15",
+    "wrangler": "^4.151.0"
+  }
+}

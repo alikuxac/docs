@@ -1,0 +1,26 @@
+---
+import Default from '@astrojs/starlight/components/Pagination.astro';
+
+function getProjectScope(pathname: string | undefined): string | null {
+	if (!pathname) return null;
+	const clean = pathname.replace(/^\/|\/$/g, '');
+	const segments = clean.split('/');
+	if ((segments[0] === 'mods' || segments[0] === 'projects') && segments[1]) {
+		return `${segments[0]}/${segments[1]}`;
+	}
+	return segments[0] || null;
+}
+
+const { pagination } = Astro.locals.starlightRoute;
+const currentScope = getProjectScope(Astro.url.pathname);
+
+if (pagination.prev && getProjectScope(pagination.prev.href) !== currentScope) {
+	pagination.prev = undefined;
+}
+
+if (pagination.next && getProjectScope(pagination.next.href) !== currentScope) {
+	pagination.next = undefined;
+}
+---
+
+<Default {...Astro.props}><slot /></Default>

@@ -1,0 +1,577 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ==========================================================================
+   Alikuxac.xyz Design System & Theme Integration for Astro Starlight
+   ========================================================================== */
+
+:root {
+	/* Alikuxac Design Tokens */
+	--color-alikuxac-primary: #4f46e5;
+	--color-alikuxac-primary-hover: #4338ca;
+	--color-alikuxac-primary-glow: rgba(79, 70, 229, 0.35);
+	--color-alikuxac-bg: #020617;
+	--color-alikuxac-card: #0f172a;
+	--color-alikuxac-card-hover: #1e293b;
+	--color-alikuxac-border: #1e293b;
+	--color-alikuxac-glass: rgba(15, 23, 42, 0.72);
+	--color-alikuxac-glass-border: rgba(255, 255, 255, 0.08);
+
+	/* Starlight Dark Theme Overrides (Default) */
+	--sl-color-accent-low: rgba(79, 70, 229, 0.2);
+	--sl-color-accent: #4f46e5;
+	--sl-color-accent-high: #818cf8;
+
+	--sl-color-white: #f8fafc;
+	--sl-color-gray-1: #f1f5f9;
+	--sl-color-gray-2: #cbd5e1;
+	--sl-color-gray-3: #94a3b8;
+	--sl-color-gray-4: #64748b;
+	--sl-color-gray-5: #334155;
+	--sl-color-gray-6: #1e293b;
+	--sl-color-black: #020617;
+
+	--sl-color-text: #cbd5e1;
+	--sl-color-text-accent: #818cf8;
+	--sl-color-text-invert: #ffffff;
+
+	--sl-color-bg: transparent;
+	--sl-color-bg-nav: rgba(15, 23, 42, 0.75);
+	--sl-color-bg-sidebar: rgba(15, 23, 42, 0.6);
+	--sl-color-bg-inline-code: rgba(30, 41, 59, 0.8);
+	--sl-color-bg-accent: #4f46e5;
+
+	--sl-color-hairline: rgba(255, 255, 255, 0.08);
+	--sl-color-hairline-light: rgba(255, 255, 255, 0.12);
+	--sl-color-hairline-shade: rgba(0, 0, 0, 0.6);
+
+	/* Typography */
+	--sl-font: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--sl-font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	--sl-line-height-headings: 1.15;
+}
+
+/* Light Theme Overrides */
+:root[data-theme='light'] {
+	--sl-color-accent-low: rgba(79, 70, 229, 0.12);
+	--sl-color-accent: #4f46e5;
+	--sl-color-accent-high: #3730a3;
+
+	--sl-color-white: #0f172a;
+	--sl-color-gray-1: #1e293b;
+	--sl-color-gray-2: #334155;
+	--sl-color-gray-3: #64748b;
+	--sl-color-gray-4: #94a3b8;
+	--sl-color-gray-5: #cbd5e1;
+	--sl-color-gray-6: #e2e8f0;
+	--sl-color-gray-7: #f8fafc;
+	--sl-color-black: #ffffff;
+
+	--sl-color-text: #334155;
+	--sl-color-text-accent: #4f46e5;
+	--sl-color-text-invert: #ffffff;
+
+	--sl-color-bg: transparent;
+	--sl-color-bg-nav: rgba(255, 255, 255, 0.85);
+	--sl-color-bg-sidebar: rgba(255, 255, 255, 0.7);
+	--sl-color-bg-inline-code: rgba(241, 245, 249, 0.95);
+
+	--sl-color-hairline: rgba(226, 232, 240, 0.85);
+	--sl-color-hairline-light: #e2e8f0;
+}
+
+/* --------------------------------------------------------------------------
+   Background Ambient Styling (Fixed Cover + Blur Overlay)
+   -------------------------------------------------------------------------- */
+
+html {
+	background-color: #020617;
+	font-family: var(--sl-font);
+	min-height: 100vh;
+}
+
+:root[data-theme='light'] html {
+	background-color: #f8fafc;
+}
+
+body {
+	position: relative;
+	min-height: 100vh;
+	background-color: transparent !important;
+	font-family: var(--sl-font);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Fixed background image matching Alikuxac.xyz */
+body::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	z-index: -2;
+	background-color: #000000;
+	background-image: url('/bg.jpg');
+	background-position: center top;
+	background-size: cover;
+	background-repeat: no-repeat;
+	opacity: 0.6;
+	pointer-events: none;
+	transition: opacity 0.3s ease;
+}
+
+/* Dark atmospheric gradient overlay with backdrop blur */
+body::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	background: linear-gradient(
+		to bottom,
+		rgba(0, 0, 0, 0.2) 0%,
+		rgba(2, 6, 23, 0.55) 50%,
+		rgba(2, 6, 23, 0.85) 100%
+	);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	pointer-events: none;
+	transition: background 0.3s ease;
+}
+
+:root[data-theme='light'] body::before {
+	opacity: 0.15;
+	background-color: #ffffff;
+}
+
+:root[data-theme='light'] body::after {
+	background: linear-gradient(
+		to bottom,
+		rgba(255, 255, 255, 0.75) 0%,
+		rgba(248, 250, 252, 0.88) 50%,
+		rgba(241, 245, 249, 0.96) 100%
+	);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+/* --------------------------------------------------------------------------
+   Header & Navbar (Glassmorphic)
+   -------------------------------------------------------------------------- */
+
+header.header {
+	background: var(--sl-color-bg-nav) !important;
+	backdrop-filter: blur(20px) !important;
+	-webkit-backdrop-filter: blur(20px) !important;
+	border-bottom: 1px solid var(--sl-color-hairline) !important;
+	box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+.site-title {
+	font-weight: 800 !important;
+	letter-spacing: -0.03em !important;
+	font-size: 1.25rem !important;
+	color: var(--sl-color-white) !important;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.site-title:hover {
+	opacity: 0.95;
+}
+
+/* Search bar button in header */
+button[data-open-modal] {
+	background: rgba(15, 23, 42, 0.6) !important;
+	backdrop-filter: blur(12px) !important;
+	-webkit-backdrop-filter: blur(12px) !important;
+	border: 1px solid var(--sl-color-hairline) !important;
+	border-radius: 9999px !important;
+	transition: all 0.2s ease !important;
+}
+
+:root[data-theme='light'] button[data-open-modal] {
+	background: rgba(255, 255, 255, 0.7) !important;
+	border-color: #e2e8f0 !important;
+}
+
+button[data-open-modal]:hover {
+	border-color: rgba(79, 70, 229, 0.5) !important;
+	box-shadow: 0 0 15px rgba(79, 70, 229, 0.2) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar (Glassmorphic & Navigation Links)
+   -------------------------------------------------------------------------- */
+
+.sidebar-pane {
+	background: var(--sl-color-bg-sidebar) !important;
+	backdrop-filter: blur(18px) !important;
+	-webkit-backdrop-filter: blur(18px) !important;
+	border-right: 1px solid var(--sl-color-hairline) !important;
+}
+
+.right-sidebar {
+	background: transparent !important;
+}
+
+/* Sidebar navigation links */
+.sidebar-content a {
+	border-radius: 8px !important;
+	padding: 0.45rem 0.75rem !important;
+	font-weight: 500;
+	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.sidebar-content a:hover {
+	color: var(--sl-color-accent-high) !important;
+	background: rgba(79, 70, 229, 0.1) !important;
+	transform: translateX(3px);
+}
+
+.sidebar-content a[aria-current='page'] {
+	background: rgba(79, 70, 229, 0.18) !important;
+	color: var(--sl-color-accent-high) !important;
+	font-weight: 600 !important;
+	box-shadow: inset 2px 0 0 0 #4f46e5;
+}
+
+:root[data-theme='light'] .sidebar-content a[aria-current='page'] {
+	background: rgba(79, 70, 229, 0.12) !important;
+	color: #4f46e5 !important;
+}
+
+/* Table of contents current active item */
+starlight-toc a[aria-current='true'] {
+	color: var(--sl-color-accent-high) !important;
+	font-weight: 600 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Headings & Typography
+   -------------------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: var(--sl-font) !important;
+	letter-spacing: -0.035em !important;
+	font-weight: 700 !important;
+	color: var(--sl-color-white);
+}
+
+h1 {
+	font-weight: 850 !important;
+	letter-spacing: -0.045em !important;
+}
+
+/* --------------------------------------------------------------------------
+   Hero Section Styling (Alikuxac Profile / Landing Vibe)
+   -------------------------------------------------------------------------- */
+
+.hero {
+	padding: 3.5rem 0 2rem 0 !important;
+}
+
+.hero .copy h1 {
+	font-size: clamp(2.5rem, calc(1.5rem + 3.5vw), 4rem) !important;
+	font-weight: 900 !important;
+	line-height: 1.1 !important;
+	letter-spacing: -0.04em !important;
+}
+
+.hero .tagline {
+	font-size: 1.25rem !important;
+	font-weight: 500 !important;
+	color: var(--sl-color-gray-3) !important;
+	line-height: 1.5 !important;
+	letter-spacing: -0.01em;
+}
+
+/* Hero Avatar image with alikuxac animated gradient ring */
+.hero img {
+	border-radius: 50% !important;
+	padding: 6px !important;
+	background: linear-gradient(130deg, #4f46e5, #e66767, #818cf8);
+	background-size: 200% 200%;
+	animation: animated-gradient 3.5s ease infinite;
+	box-shadow: 0 12px 36px rgba(79, 70, 229, 0.35) !important;
+	transition: transform 0.3s ease;
+}
+
+.hero img:hover {
+	transform: scale(1.04);
+}
+
+@keyframes animated-gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+/* Hero Action Buttons */
+.hero .actions a {
+	border-radius: 12px !important;
+	padding: 0.75rem 2rem !important;
+	font-weight: 600 !important;
+	font-size: 1rem !important;
+	transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.hero .actions a.primary {
+	background: #4f46e5 !important;
+	color: #ffffff !important;
+	box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4) !important;
+	border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.hero .actions a.primary:hover {
+	background: #4338ca !important;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 24px rgba(79, 70, 229, 0.55) !important;
+}
+
+.hero .actions a.minimal {
+	border: 2px solid rgba(79, 70, 229, 0.7) !important;
+	color: var(--sl-color-accent-high) !important;
+	background: rgba(15, 23, 42, 0.4) !important;
+	backdrop-filter: blur(10px) !important;
+}
+
+:root[data-theme='light'] .hero .actions a.minimal {
+	background: rgba(255, 255, 255, 0.6) !important;
+	color: #4f46e5 !important;
+	border-color: #4f46e5 !important;
+}
+
+.hero .actions a.minimal:hover {
+	background: #4f46e5 !important;
+	color: #ffffff !important;
+	border-color: #4f46e5 !important;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Cards & CardGrid (Glass Cards)
+   -------------------------------------------------------------------------- */
+
+.card {
+	background: rgba(15, 23, 42, 0.65) !important;
+	backdrop-filter: blur(16px) !important;
+	-webkit-backdrop-filter: blur(16px) !important;
+	border: 1px solid var(--sl-color-hairline) !important;
+	border-radius: 14px !important;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25) !important;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+	overflow: hidden;
+}
+
+:root[data-theme='light'] .card {
+	background: rgba(255, 255, 255, 0.75) !important;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+.card:hover {
+	transform: translateY(-4px);
+	border-color: rgba(79, 70, 229, 0.45) !important;
+	box-shadow:
+		0 16px 36px rgba(0, 0, 0, 0.35),
+		0 0 25px rgba(79, 70, 229, 0.22) !important;
+}
+
+:root[data-theme='light'] .card:hover {
+	box-shadow:
+		0 12px 28px rgba(0, 0, 0, 0.08),
+		0 0 20px rgba(79, 70, 229, 0.15) !important;
+}
+
+.card .title {
+	font-weight: 700 !important;
+	font-size: 1.15rem !important;
+	color: var(--sl-color-white) !important;
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+}
+
+.card .icon {
+	color: #818cf8 !important;
+	background: rgba(79, 70, 229, 0.16) !important;
+	padding: 0.45rem !important;
+	border-radius: 10px !important;
+	border: 1px solid rgba(79, 70, 229, 0.25) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Code Blocks & Inline Code
+   -------------------------------------------------------------------------- */
+
+pre,
+.expressive-code {
+	border-radius: 12px !important;
+	border: 1px solid var(--sl-color-hairline) !important;
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
+	backdrop-filter: blur(14px) !important;
+}
+
+:not(pre) > code {
+	background: rgba(30, 41, 59, 0.6) !important;
+	border: 1px solid rgba(255, 255, 255, 0.08) !important;
+	border-radius: 6px !important;
+	padding: 0.15rem 0.35rem !important;
+	font-size: 0.875em !important;
+	color: #cbd5e1 !important;
+}
+
+:root[data-theme='light'] :not(pre) > code {
+	background: rgba(241, 245, 249, 0.9) !important;
+	border-color: #e2e8f0 !important;
+	color: #334155 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Search Dialog & Pagefind Modal
+   -------------------------------------------------------------------------- */
+
+dialog {
+	backdrop-filter: blur(20px) !important;
+	-webkit-backdrop-filter: blur(20px) !important;
+	background: rgba(15, 23, 42, 0.85) !important;
+	border: 1px solid rgba(255, 255, 255, 0.12) !important;
+	border-radius: 16px !important;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+}
+
+:root[data-theme='light'] dialog {
+	background: rgba(255, 255, 255, 0.92) !important;
+	border-color: #e2e8f0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Custom Scrollbar (Matching Alikuxac.xyz)
+   -------------------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #334155;
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #4f46e5;
+}
+
+:root[data-theme='light'] ::-webkit-scrollbar-thumb {
+	background: #cbd5e1;
+}
+
+:root[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+	background: #4f46e5;
+}
+
+/* --------------------------------------------------------------------------
+   GitHub Blockquote Alerts Styling (remark-github-blockquote-alert)
+   -------------------------------------------------------------------------- */
+
+.markdown-alert {
+	border-radius: 12px;
+	border-left-width: 4px;
+	border-left-style: solid;
+	padding: 1rem 1.25rem;
+	margin: 1.5rem 0;
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+:root .markdown-alert {
+	background: rgba(15, 23, 42, 0.65);
+	border-color: var(--color-border-default, #1e293b);
+}
+
+:root[data-theme='light'] .markdown-alert {
+	background: rgba(248, 250, 252, 0.85);
+	border-color: #cbd5e1;
+}
+
+.markdown-alert .markdown-alert-title {
+	font-weight: 600;
+	font-size: 0.95rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.markdown-alert.markdown-alert-note {
+	border-left-color: #4f46e5;
+}
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+	color: #818cf8;
+}
+
+.markdown-alert.markdown-alert-tip {
+	border-left-color: #10b981;
+}
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+	color: #34d399;
+}
+
+.markdown-alert.markdown-alert-important {
+	border-left-color: #8b5cf6;
+}
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+	color: #a78bfa;
+}
+
+.markdown-alert.markdown-alert-warning {
+	border-left-color: #f59e0b;
+}
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+	color: #fbbf24;
+}
+
+.markdown-alert.markdown-alert-caution {
+	border-left-color: #ef4444;
+}
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+	color: #f87171;
+}
+
+/* --------------------------------------------------------------------------
+   Mermaid Diagrams Styling (astro-mermaid)
+   -------------------------------------------------------------------------- */
+
+.mermaid {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 1.5rem;
+	background: rgba(15, 23, 42, 0.55);
+	border: 1px solid var(--sl-color-hairline);
+	border-radius: 12px;
+	margin: 1.5rem 0;
+	overflow-x: auto;
+}
+
+:root[data-theme='light'] .mermaid {
+	background: rgba(248, 250, 252, 0.9);
+	border-color: #e2e8f0;
+}

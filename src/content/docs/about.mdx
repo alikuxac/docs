@@ -1,0 +1,54 @@
+---
+title: About This Documentation Portal
+description: Architecture, purpose, and automated multi-repository documentation synchronization for Alikuxac's projects.
+---
+
+This site hosts documentation for my Minecraft mods and open-source tools. Builds pull markdown and assets directly from each project's Git repository.
+
+## Why This Site Exists
+
+Documenting Minecraft mods across releases presents a few specific problems:
+
+1. **Version branches**: Each Minecraft version lives on its own branch (`1.20.1`, `1.21.1`), often with breaking config and API changes.
+2. **Tag pinning**: Features shift between mod releases. Pinning docs to release tags ensures guides match the version players actually install.
+3. **Asset locality**: Screenshots and config samples stay in the source repository alongside the code, rather than on external image hosts.
+
+## How It Works
+
+The ingestion script (`scripts/sync-docs.ts`) runs before each Astro build:
+
+- **Sparse checkout**: Queries remote branches and tags, checking out only configured `docs/` directories without downloading Java sources, build tools, or jars.
+- **Branch and tag discovery**: Resolves the latest release tag per version branch (e.g., `v0.2.0+1.21.1`) and attaches badges to sidebar links.
+- **Asset extraction and link rewriting**: Moves relative image paths into the public directory and points non-doc code references to their GitHub URLs.
+- **Dynamic sidebar**: Generates Starlight navigation groups from active repositories and version branches.
+
+## Multi-Loader Documentation
+
+Most mods here use a multi-loader structure per version branch (`common/`, `neoforge/`, `forge/`, `fabric/`).
+
+Tabs synchronized with `syncKey="modloader"` persist the selected loader across pages:
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<Tabs syncKey="modloader">
+  <TabItem label="NeoForge">
+    - **Configuration Path**: `config/machinemetrics-client.toml`
+    - **Mod Dependencies**: NeoForge 21.1+
+    - **Compatibilities**: Create (NeoForge), Mekanism (NeoForge)
+  </TabItem>
+  <TabItem label="Forge">
+    - **Configuration Path**: `config/machinemetrics-client.toml`
+    - **Mod Dependencies**: Minecraft Forge 51.0+
+    - **Compatibilities**: Create (Forge), Mekanism (Forge)
+  </TabItem>
+  <TabItem label="Fabric">
+    - **Configuration Path**: `config/machinemetrics.json`
+    - **Mod Dependencies**: Fabric Loader 0.16+, Fabric API
+    - **Compatibilities**: Fabric Transfer API
+  </TabItem>
+</Tabs>
+
+## Documented Projects
+
+- **[Machine Metrics](/mods/machine-metrics/1211/configuration/)**: In-game HUD and telemetry inspector for FE/t energy transfer, fluid tanks, Create kinetic networks, and Mekanism gases.
+- **[Human Nature](/mods/human-nature/1211/injury_system/)**: Body-part damage tracking, injury severity tiers, and medical treatment mechanics for Minecraft 1.21.1.

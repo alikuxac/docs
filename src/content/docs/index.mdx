@@ -1,0 +1,34 @@
+---
+title: Alikuxac's Documentation
+description: Technical docs, configuration guides, and references for Machine Metrics, Human Nature, and related projects.
+template: splash
+hero:
+  tagline: Centralized documentation and configuration guides for my Minecraft mods and open-source projects.
+  actions:
+    - text: Introduction
+      link: /about/
+      icon: right-arrow
+    - text: Machine Metrics Guide
+      link: /mods/machine-metrics/1211/configuration/
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Getting Started
+
+<CardGrid stagger>
+	<Card title="Documentation Overview" icon="open-book">
+		Learn why this portal was built, how automated multi-branch Git synchronization works, and how to navigate versioned mod docs. [Read the Introduction](/about/).
+	</Card>
+	<Card title="Machine Metrics" icon="laptop">
+		In-game HUD diagnostics for energy rates, fluid transfers, kinetic networks (Create), and Mekanism gases. [Configuration Guide](/mods/machine-metrics/1211/configuration/).
+	</Card>
+	<Card title="Human Nature" icon="heart">
+		Mechanics, body damage tracking, and medical systems for Minecraft 1.21.1. [Injury System Guide](/mods/human-nature/1211/injury_system/).
+	</Card>
+	<Card title="Automated Git Sync" icon="random">
+		Documentation pages are synchronized directly from project Git branches and release tags during prebuild.
+	</Card>
+</CardGrid>

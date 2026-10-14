@@ -1,0 +1,52 @@
+# ==============================================================================
+# GitHub Action Template for Source Repositories (e.g. MachineMetrics, HumanNature)
+# Place this file in your source repository: .github/workflows/notify-docs-portal.yml
+# ==============================================================================
+name: Notify Documentation Portal
+
+on:
+  push:
+    branches:
+      - '1.**'
+      - main
+      - master
+    paths:
+      - 'docs/**'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  dispatch-docs:
+    name: Dispatch Rebuild Event to Docs Portal
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Repository Dispatch to Docs Portal
+        env:
+          DOCS_TOKEN: ${{ secrets.DOCS_PORTAL_TOKEN }}
+          DOCS_REPO: "alikuxac/docs"
+          # Replace with the id configured in docs.config.ts (e.g., 'machine-metrics' or 'human-nature')
+          REPO_ID: "machine-metrics"
+        run: |
+          if [ -z "$DOCS_TOKEN" ]; then
+            echo "::error::Secret DOCS_PORTAL_TOKEN is not configured in this repository."
+            exit 1
+          fi
+
+          REF_NAME="${{ github.ref_name }}"
+          echo "[Dispatch] Notifying $DOCS_REPO for repo: $REPO_ID (ref: $REF_NAME)"
+
+          HTTP_RESPONSE=$(curl -s -o response.txt -w "%{http_code}" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $DOCS_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${DOCS_REPO}/dispatches" \
+            -d "{\"event_type\": \"sync-docs\", \"client_payload\": {\"repo\": \"${REPO_ID}\", \"ref\": \"${REF_NAME}\"}}")
+
+          if [ "$HTTP_RESPONSE" -eq 204 ]; then
+            echo "[Dispatch] Successfully triggered documentation rebuild on $DOCS_REPO"
+          else
+            echo "::error::Dispatch failed with status $HTTP_RESPONSE: $(cat response.txt)"
+            exit 1
+          fi

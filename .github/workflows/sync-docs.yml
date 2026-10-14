@@ -1,0 +1,142 @@
+name: Stateless Docs Build & Cloudflare Pages Deploy
+
+on:
+  schedule:
+    # Smart 12-hour Cron (UTC 00:00 and 12:00)
+    - cron: '0 */12 * * *'
+  repository_dispatch:
+    types: [sync-docs, doc-updated]
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - 'README.md'
+      - '.vscode/**'
+      - '.gitignore'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force build and deploy regardless of remote hash diff'
+        required: false
+        default: true
+        type: boolean
+      repo:
+        description: 'Target Repository ID from docs.config.ts (leave empty to sync all)'
+        required: false
+        default: ''
+        type: string
+      clean:
+        description: 'Clean cache before sync'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: cloudflare-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  stateless-deploy:
+    name: Smart Build & Direct Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Docs Engine
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Restore Remote Hashes Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/remote-hashes.json
+          key: docs-remote-hashes-${{ github.run_id }}
+          restore-keys: |
+            docs-remote-hashes-
+
+      - name: Check Remote Changes (Zero-Waste Gate)
+        id: check_changes
+        shell: bash
+        run: |
+          FORCE_ARG=""
+          # Automatically force rebuild on manual trigger (if checked), code push, or repository_dispatch
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "repository_dispatch" ] || [ "${{ inputs.force }}" = "true" ]; then
+            FORCE_ARG="--force"
+            echo "[Gate] Event is '${{ github.event_name }}' (forcing execution)"
+          else
+            echo "[Gate] Event is 12h Cron '${{ github.event_name }}' (probing remote hashes...)"
+          fi
+
+          npx --yes tsx scripts/check-remote-changes.ts $FORCE_ARG
+
+      - name: Setup pnpm
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Get pnpm store directory
+        if: steps.check_changes.outputs.has_changes == 'true'
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm dependencies
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Dependencies
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Ephemeral Documentation Sync
+        if: steps.check_changes.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          TARGET_REPO="${{ github.event.client_payload.repo || inputs.repo }}"
+          CLEAN_FLAG=""
+          if [ "${{ inputs.clean }}" = "true" ]; then CLEAN_FLAG="--clean"; fi
+
+          if [ -n "$TARGET_REPO" ]; then
+            echo "[Stateless] Ingesting targeted repository: $TARGET_REPO"
+            pnpm docs:sync --repo "$TARGET_REPO" $CLEAN_FLAG
+          else
+            echo "[Stateless] Ingesting all configured repositories"
+            pnpm docs:sync $CLEAN_FLAG
+          fi
+
+      - name: Compile Astro Production Bundle (dist)
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: pnpm build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          CHECK_LINKS: 'true'
+
+      - name: Deploy dist/ directly to Cloudflare Pages
+        if: steps.check_changes.outputs.has_changes == 'true'
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler pages deploy dist \
+            --project-name="${{ vars.CLOUDFLARE_PROJECT_NAME || 'alikuxac-docs' }}" \
+            --branch="${{ github.ref_name || 'master' }}" \
+            --commit-dirty=true
+
+      - name: Save Updated Remote Hashes Cache
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/remote-hashes.json
+          key: docs-remote-hashes-${{ github.run_id }}
