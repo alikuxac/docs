@@ -229,7 +229,7 @@ export class DocSyncEngine {
       items: [
         {
           label: repo.name,
-          collapsed: false,
+          collapsed: true,
           items: versionItems,
         },
       ],
@@ -346,7 +346,7 @@ export class DocSyncEngine {
       items: [
         {
           label: repo.name,
-          collapsed: false,
+          collapsed: true,
           items: branchItems,
         },
       ],
