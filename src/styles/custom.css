@@ -201,11 +201,51 @@ button[data-open-modal]:hover {
    Sidebar (Glassmorphic & Navigation Links)
    -------------------------------------------------------------------------- */
 
-.sidebar-pane {
-	background: var(--sl-color-bg-sidebar) !important;
-	backdrop-filter: blur(18px) !important;
-	-webkit-backdrop-filter: blur(18px) !important;
-	border-right: 1px solid var(--sl-color-hairline) !important;
+/* Mobile Sidebar Drawer (< 50rem): Solid opaque background to prevent underlying text bleed */
+@media (max-width: 49.999rem) {
+	.sidebar-pane {
+		background-color: #020617 !important;
+		background-image: none !important;
+		backdrop-filter: none !important;
+		-webkit-backdrop-filter: none !important;
+		border-right: none !important;
+		border-top: 1px solid var(--sl-color-hairline) !important;
+	}
+
+	:root[data-theme='light'] .sidebar-pane {
+		background-color: #ffffff !important;
+		border-top-color: var(--sl-color-hairline) !important;
+	}
+
+	.sidebar-content {
+		padding-bottom: 3.5rem !important;
+	}
+
+	.sidebar-pane::backdrop {
+		background-color: rgba(0, 0, 0, 0.65) !important;
+		backdrop-filter: blur(4px) !important;
+		-webkit-backdrop-filter: blur(4px) !important;
+	}
+
+	/* Mobile TOC floating header */
+	mobile-starlight-toc nav {
+		background-color: #020617 !important;
+		border-bottom: 1px solid var(--sl-color-hairline) !important;
+	}
+
+	:root[data-theme='light'] mobile-starlight-toc nav {
+		background-color: #ffffff !important;
+	}
+}
+
+/* Desktop Sidebar (>= 50rem): Retain premium glassmorphic styling */
+@media (min-width: 50rem) {
+	.sidebar-pane {
+		background: var(--sl-color-bg-sidebar) !important;
+		backdrop-filter: blur(18px) !important;
+		-webkit-backdrop-filter: blur(18px) !important;
+		border-right: 1px solid var(--sl-color-hairline) !important;
+	}
 }
 
 .right-sidebar {
