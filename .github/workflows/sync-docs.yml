@@ -27,9 +27,9 @@ on:
         default: ''
         type: string
       clean:
-        description: 'Clean cache before sync'
+        description: 'Clean cache and destination directories before sync'
         required: false
-        default: false
+        default: true
         type: boolean
 
 concurrency:
@@ -104,14 +104,16 @@ jobs:
         shell: bash
         run: |
           TARGET_REPO="${{ github.event.client_payload.repo || inputs.repo }}"
-          CLEAN_FLAG=""
-          if [ "${{ inputs.clean }}" = "true" ]; then CLEAN_FLAG="--clean"; fi
+          CLEAN_FLAG="--clean"
+          if [ "${{ inputs.clean }}" = "false" ] || [ "${{ github.event.client_payload.clean }}" = "false" ]; then
+            CLEAN_FLAG=""
+          fi
 
           if [ -n "$TARGET_REPO" ]; then
-            echo "[Stateless] Ingesting targeted repository: $TARGET_REPO"
+            echo "[Stateless] Ingesting targeted repository: $TARGET_REPO (clean: ${CLEAN_FLAG:-false})"
             pnpm docs:sync --repo "$TARGET_REPO" $CLEAN_FLAG
           else
-            echo "[Stateless] Ingesting all configured repositories"
+            echo "[Stateless] Ingesting all configured repositories (clean: ${CLEAN_FLAG:-false})"
             pnpm docs:sync $CLEAN_FLAG
           fi
 

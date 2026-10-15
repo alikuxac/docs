@@ -89,6 +89,10 @@ export class DocSyncEngine {
     const repoCacheDir = path.join(ctx.cacheBaseDir, repo.id);
     await GitClient.ensureRepoClone(repo.remote, repoCacheDir);
 
+    if (ctx.cleanRequested) {
+      await fs.rm(path.join(ctx.publicAssetDir, repo.id), { recursive: true, force: true });
+    }
+
     const versionItems: ISidebarItem[] = [];
     const resolvedTags = new Map<string, string>();
     const docLinks = new Map<string, string>();
@@ -182,6 +186,10 @@ export class DocSyncEngine {
   ): Promise<ISidebarGroup | null> {
     const repoCacheDir = path.join(ctx.cacheBaseDir, repo.id);
     await GitClient.ensureRepoClone(repo.remote, repoCacheDir);
+
+    if (ctx.cleanRequested) {
+      await fs.rm(path.join(ctx.publicAssetDir, repo.id), { recursive: true, force: true });
+    }
 
     const branchItems: ISidebarItem[] = [];
 
