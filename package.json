@@ -34,5 +34,10 @@
     "gray-matter": "^4.0.3",
     "tsx": "^4.23.15",
     "wrangler": "^4.151.0"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.28.0"
   }
 }
