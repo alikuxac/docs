@@ -146,6 +146,7 @@ export class DocSyncEngine {
         versionItems.push({
           label: `Minecraft ${version}`,
           badge: { text: stableBadgeText, variant: 'note' },
+          collapsed: true,
           items: [
             {
               autogenerate: {
