@@ -615,3 +615,95 @@ dialog {
 	background: rgba(248, 250, 252, 0.9);
 	border-color: #e2e8f0;
 }
+
+/* --------------------------------------------------------------------------
+   Markdown Tables Styling (High Contrast & Glass Background)
+   -------------------------------------------------------------------------- */
+
+.sl-markdown-content table:not(:where(.not-content *)) {
+	display: block;
+	overflow-x: auto;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	margin: 1.5rem 0;
+	background: rgba(15, 23, 42, 0.7);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid var(--sl-color-hairline-light, rgba(255, 255, 255, 0.12));
+	border-radius: 10px;
+	box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+}
+
+.sl-markdown-content th:not(:where(.not-content *)) {
+	background: rgba(30, 41, 59, 0.75);
+	color: #f8fafc;
+	font-weight: 600;
+	font-size: 0.875rem;
+	letter-spacing: 0.02em;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+	white-space: nowrap;
+}
+
+.sl-markdown-content td:not(:where(.not-content *)) {
+	color: #e2e8f0;
+	font-size: 0.925rem;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	transition: background-color 0.15s ease;
+}
+
+.sl-markdown-content :is(th:first-child, td:first-child):not(:where(.not-content *)) {
+	padding-inline-start: 1rem !important;
+}
+
+.sl-markdown-content :is(th:last-child, td:last-child):not(:where(.not-content *)) {
+	padding-inline-end: 1rem !important;
+}
+
+.sl-markdown-content tr:last-child td:not(:where(.not-content *)) {
+	border-bottom: none;
+}
+
+.sl-markdown-content tbody tr:hover td:not(:where(.not-content *)) {
+	background-color: rgba(79, 70, 229, 0.08);
+}
+
+.sl-markdown-content td:not(:where(.not-content *)) code {
+	background: rgba(30, 41, 59, 0.85);
+	color: var(--sl-color-accent-high, #818cf8);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	padding: 0.15rem 0.4rem;
+	border-radius: 4px;
+	font-size: 0.85em;
+}
+
+/* Light Theme Overrides for Tables */
+:root[data-theme='light'] .sl-markdown-content table:not(:where(.not-content *)) {
+	background: rgba(255, 255, 255, 0.88);
+	border-color: rgba(0, 0, 0, 0.1);
+	box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme='light'] .sl-markdown-content th:not(:where(.not-content *)) {
+	background: rgba(241, 245, 249, 0.95);
+	color: #0f172a;
+	border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme='light'] .sl-markdown-content td:not(:where(.not-content *)) {
+	color: #1e293b;
+	border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme='light'] .sl-markdown-content tbody tr:hover td:not(:where(.not-content *)) {
+	background-color: rgba(79, 70, 229, 0.05);
+}
+
+:root[data-theme='light'] .sl-markdown-content td:not(:where(.not-content *)) code {
+	background: rgba(241, 245, 249, 0.9);
+	color: var(--sl-color-accent, #4f46e5);
+	border-color: rgba(0, 0, 0, 0.1);
+}
+

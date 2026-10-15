@@ -104,32 +104,39 @@ export class DocSyncEngine {
         continue;
       }
 
-      const latestTag = repo.tagStrategy === 'latest-tag'
-        ? await GitClient.getLatestTagOnBranch(repoCacheDir, version)
-        : null;
+      const lifecycleEntry = repo.lifecycle?.find((l) => l.version === version);
+      const isStatusActive = !lifecycleEntry || lifecycleEntry.status === 'active';
+
+      const latestTag = await GitClient.getLatestTagOnBranch(repoCacheDir, version);
       if (latestTag) {
         resolvedTags.set(version, latestTag);
       }
-      const ref = latestTag ?? `origin/${version}`;
-      const badgeText = latestTag ? `MC ${version} (${latestTag})` : `MC ${version}`;
 
-      const targetDestDir = path.join(ctx.contentBaseDir, 'mods', repo.id, version);
+      // Stable track: pinned to latestTag if available, otherwise branch HEAD
+      const stableRef = latestTag ?? `origin/${version}`;
+      const stableBadgeText = latestTag ? `MC ${version} (${latestTag})` : `MC ${version}`;
+      const stableDestDir = path.join(ctx.contentBaseDir, 'mods', repo.id, version);
+      const devVersionKey = `${version}-dev`;
+      const devDestDir = path.join(ctx.contentBaseDir, 'mods', repo.id, devVersionKey);
+
       if (ctx.cleanRequested) {
-        await fs.rm(targetDestDir, { recursive: true, force: true });
+        await fs.rm(stableDestDir, { recursive: true, force: true });
+        await fs.rm(devDestDir, { recursive: true, force: true });
       }
 
-      const { count, firstFileRelPath } = await this.extractAndTransformDocs({
+      const { count: stableCount, firstFileRelPath } = await this.extractAndTransformDocs({
         repoCacheDir,
-        ref,
+        ref: stableRef,
         docRoot: repo.docRoot ?? 'docs',
-        destDir: targetDestDir,
+        destDir: stableDestDir,
         publicAssetDir: ctx.publicAssetDir,
         repoId: repo.id,
         repoRemote: repo.remote,
-        badgeLabel: badgeText,
+        badgeLabel: stableBadgeText,
+        badgeVariant: 'note',
       });
 
-      if (count > 0) {
+      if (stableCount > 0) {
         const slugVersion = version.replace(/\./g, '');
         const link = firstFileRelPath
           ? `/mods/${repo.id}/${slugVersion}/${firstFileRelPath}/`
@@ -138,7 +145,7 @@ export class DocSyncEngine {
 
         versionItems.push({
           label: `Minecraft ${version}`,
-          badge: { text: badgeText, variant: 'note' },
+          badge: { text: stableBadgeText, variant: 'note' },
           items: [
             {
               autogenerate: {
@@ -148,7 +155,56 @@ export class DocSyncEngine {
           ],
         });
       }
+
+      // Dev Preview track: generated ONLY for active version when branch HEAD is NOT identical to latestTag
+      // AND has unreleased doc changes ahead of tag
+      if (latestTag && isStatusActive) {
+        const isHeadSameAsTag = await GitClient.isBranchHeadSameAsTag(
+          repoCacheDir,
+          version,
+          latestTag
+        );
+
+        if (!isHeadSameAsTag) {
+          const hasUnreleasedDocs = await GitClient.hasDocDiffBetween(
+            repoCacheDir,
+            latestTag,
+            `origin/${version}`,
+            repo.docRoot ?? 'docs'
+          );
+
+          if (hasUnreleasedDocs) {
+            console.log(`[DocSync] Generating Dev Preview for ${repo.id} (${version}) from origin/${version}`);
+          const { count: devCount } = await this.extractAndTransformDocs({
+            repoCacheDir,
+            ref: `origin/${version}`,
+            docRoot: repo.docRoot ?? 'docs',
+            destDir: devDestDir,
+            publicAssetDir: ctx.publicAssetDir,
+            repoId: repo.id,
+            repoRemote: repo.remote,
+            badgeLabel: `MC ${version} (Dev)`,
+            badgeVariant: 'caution',
+          });
+
+          if (devCount > 0) {
+            versionItems.push({
+              label: `Minecraft ${version} (Dev)`,
+              badge: { text: 'Dev', variant: 'caution' },
+              collapsed: true,
+              items: [
+                {
+                  autogenerate: {
+                    directory: `mods/${repo.id}/${devVersionKey}`,
+                  },
+                },
+              ],
+            });
+          }
+        }
+      }
     }
+  }
 
     if (repo.lifecycle && repo.lifecycle.length > 0) {
       const versionsFilePath = path.join(ctx.contentBaseDir, 'mods', repo.id, 'versions.md');

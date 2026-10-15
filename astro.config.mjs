@@ -91,6 +91,7 @@ export default defineConfig({
 				ThemeProvider: './src/components/ThemeProvider.astro',
 				ThemeSelect: './src/components/ThemeSelect.astro',
 				Pagination: './src/components/Pagination.astro',
+				Sidebar: './src/components/Sidebar.astro',
 			},
 			social: [
 				{ icon: 'external', label: 'alikuxac.xyz', href: 'https://alikuxac.xyz' },

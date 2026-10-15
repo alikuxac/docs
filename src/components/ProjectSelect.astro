@@ -1,0 +1,177 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+
+export interface IProjectOption {
+	label: string;
+	value: string;
+	selected: boolean;
+	badge?: {
+		text: string;
+		variant?: string;
+	};
+}
+
+interface Props {
+	options: IProjectOption[];
+	categoryLabel?: string;
+}
+
+const { options, categoryLabel = 'Project' } = Astro.props;
+---
+
+<div class="project-switcher-container">
+	<div class="project-switcher-header">
+		<span class="switcher-badge">
+			<Icon name="puzzle" size="0.75rem" />
+			<span>{categoryLabel}</span>
+		</span>
+	</div>
+
+	<div class="select-wrapper">
+		<label for="project-switcher-select" class="sr-only">Switch Project</label>
+		<select id="project-switcher-select" class="project-select" autocomplete="off">
+			{
+				options.map((opt) => (
+					<option value={opt.value} selected={opt.selected}>
+						{opt.label}
+					</option>
+				))
+			}
+		</select>
+		<div class="caret-indicator" aria-hidden="true">
+			<Icon name="down-caret" size="1rem" />
+		</div>
+	</div>
+</div>
+
+<script>
+	const select = document.getElementById('project-switcher-select') as HTMLSelectElement | null;
+	if (select) {
+		select.addEventListener('change', () => {
+			const targetUrl = select.value;
+			if (targetUrl && targetUrl !== '#' && targetUrl !== window.location.pathname) {
+				window.location.href = targetUrl;
+			}
+		});
+	}
+</script>
+
+<style>
+	.project-switcher-container {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		margin: 0.5rem 0 1rem 0;
+		padding: 0.5rem 0.65rem;
+		background: rgba(15, 23, 42, 0.55);
+		border: 1px solid var(--sl-color-hairline-light, rgba(255, 255, 255, 0.12));
+		border-radius: 0.5rem;
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+	}
+
+	.project-switcher-container:hover,
+	.project-switcher-container:focus-within {
+		border-color: var(--sl-color-accent, #4f46e5);
+		box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2);
+		background: rgba(15, 23, 42, 0.75);
+	}
+
+	:root[data-theme='light'] .project-switcher-container {
+		background: rgba(241, 245, 249, 0.75);
+		border-color: rgba(0, 0, 0, 0.1);
+	}
+
+	:root[data-theme='light'] .project-switcher-container:hover,
+	:root[data-theme='light'] .project-switcher-container:focus-within {
+		background: #ffffff;
+		border-color: var(--sl-color-accent, #4f46e5);
+	}
+
+	.project-switcher-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.switcher-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--sl-color-accent-high, #818cf8);
+	}
+
+	:root[data-theme='light'] .switcher-badge {
+		color: var(--sl-color-accent, #4f46e5);
+	}
+
+	.select-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+		width: 100%;
+	}
+
+	.project-select {
+		width: 100%;
+		appearance: none;
+		-webkit-appearance: none;
+		background: transparent;
+		border: none;
+		color: var(--sl-color-white, #f8fafc);
+		font-family: var(--sl-font);
+		font-size: var(--sl-text-sm, 0.875rem);
+		font-weight: 600;
+		padding: 0.25rem 1.75rem 0.25rem 0;
+		cursor: pointer;
+		outline: none;
+	}
+
+	:root[data-theme='light'] .project-select {
+		color: var(--sl-color-gray-1, #1e293b);
+	}
+
+	.project-select option {
+		background: #0f172a;
+		color: #f8fafc;
+		font-weight: 500;
+		padding: 0.5rem;
+	}
+
+	:root[data-theme='light'] .project-select option {
+		background: #ffffff;
+		color: #0f172a;
+	}
+
+	.caret-indicator {
+		position: absolute;
+		right: 0;
+		display: flex;
+		align-items: center;
+		pointer-events: none;
+		color: var(--sl-color-gray-3, #94a3b8);
+		transition: color 0.15s ease, transform 0.15s ease;
+	}
+
+	.project-switcher-container:hover .caret-indicator {
+		color: var(--sl-color-accent, #4f46e5);
+		transform: translateY(1px);
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border-width: 0;
+	}
+</style>

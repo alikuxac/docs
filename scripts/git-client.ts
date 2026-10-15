@@ -78,6 +78,50 @@ export class GitClient {
     }
   }
 
+  public static async getCommitSha(repoDir: string, ref: string): Promise<string | null> {
+    try {
+      const output = await this.runGit(['rev-parse', `${ref}^{commit}`], {
+        cwd: repoDir,
+      });
+      return output.trim();
+    } catch {
+      return null;
+    }
+  }
+
+  public static async isBranchHeadSameAsTag(
+    repoDir: string,
+    branch: string,
+    tag: string
+  ): Promise<boolean> {
+    try {
+      const branchSha = await this.getCommitSha(repoDir, `origin/${branch}`);
+      const tagSha = await this.getCommitSha(repoDir, tag);
+      return Boolean(branchSha && tagSha && branchSha === tagSha);
+    } catch {
+      return false;
+    }
+  }
+
+  public static async hasDocDiffBetween(
+    repoDir: string,
+    baseRef: string,
+    targetRef: string,
+    docRoot: string
+  ): Promise<boolean> {
+    try {
+      const normalizedRoot = docRoot === '.' ? '' : docRoot;
+      const args = ['diff', '--name-only', baseRef, targetRef];
+      if (normalizedRoot) {
+        args.push('--', normalizedRoot);
+      }
+      const output = await this.runGit(args, { cwd: repoDir });
+      return output.trim().length > 0;
+    } catch {
+      return false;
+    }
+  }
+
   private static async directoryExists(dirPath: string): Promise<boolean> {
     try {
       const stat = await fs.stat(dirPath);

@@ -1,0 +1,97 @@
+---
+import Default from '@astrojs/starlight/components/Sidebar.astro';
+import StarlightSidebarTopicsSidebar from 'starlight-sidebar-topics/components/Sidebar.astro';
+import ProjectSelect, { type IProjectOption } from './ProjectSelect.astro';
+
+interface ISidebarLink {
+	type: 'link';
+	label: string;
+	href: string;
+	isCurrent?: boolean;
+}
+
+interface ISidebarGroup {
+	type: 'group';
+	label: string;
+	entries: (ISidebarLink | ISidebarGroup)[];
+	collapsed?: boolean;
+}
+
+type SidebarEntry = ISidebarLink | ISidebarGroup;
+
+function hasCurrent(entry: SidebarEntry): boolean {
+	if (entry.type === 'link') {
+		return Boolean(entry.isCurrent);
+	}
+	if (entry.type === 'group' && Array.isArray(entry.entries)) {
+		return entry.entries.some(hasCurrent);
+	}
+	return false;
+}
+
+function findFirstLink(entries: SidebarEntry[]): string {
+	for (const entry of entries) {
+		if (entry.type === 'link' && entry.href) {
+			return entry.href;
+		}
+		if (entry.type === 'group' && Array.isArray(entry.entries)) {
+			const nested = findFirstLink(entry.entries);
+			if (nested !== '#') return nested;
+		}
+	}
+	return '#';
+}
+
+const { sidebar } = Astro.locals.starlightRoute;
+const isGroup = (entry: SidebarEntry): entry is ISidebarGroup =>
+	entry.type === 'group' && Array.isArray(entry.entries);
+
+const projectGroups = (sidebar as SidebarEntry[]).filter(isGroup);
+
+let showSwitcher = false;
+let options: IProjectOption[] = [];
+let categoryLabel = 'Project';
+
+if (projectGroups.length > 0) {
+	// Find active project group
+	let activeProject = projectGroups.find(hasCurrent);
+
+	if (!activeProject) {
+		const currentPath = Astro.url.pathname;
+		activeProject =
+			projectGroups.find((g) => {
+				const firstHref = findFirstLink(g.entries);
+				const segments = firstHref.replace(/^\/|\/$/g, '').split('/');
+				// Match against project slug (e.g. 'machine-metrics' or 'human-nature')
+				const projectSlug = segments[1];
+				return projectSlug ? currentPath.includes(`/${projectSlug}/`) : false;
+			}) ?? projectGroups[0];
+	}
+
+	// Only show switcher if there's at least one project group
+	if (activeProject) {
+		showSwitcher = projectGroups.length > 1;
+
+		options = projectGroups.map((g) => ({
+			label: g.label,
+			value: findFirstLink(g.entries),
+			selected: g === activeProject,
+		}));
+
+		// Resolve current topic category label if available
+		const topicData = Astro.locals.starlightSidebarTopics?.topics?.find(
+			(t: { isCurrent?: boolean }) => t.isCurrent
+		);
+		if (topicData?.label) {
+			categoryLabel = String(topicData.label);
+		}
+
+		// Mutate sidebar to ONLY render active project's sub-entries
+		Astro.locals.starlightRoute.sidebar = activeProject.entries;
+	}
+}
+---
+
+<StarlightSidebarTopicsSidebar />
+{showSwitcher && <ProjectSelect options={options} categoryLabel={categoryLabel} />}
+<Default><slot /></Default>
