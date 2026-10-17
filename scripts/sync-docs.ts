@@ -12,6 +12,7 @@ import type {
 import { GitClient } from './git-client.js';
 import { DocTransformer } from './transformer.js';
 import { LifecyclePageGenerator } from './lifecycle-generator.js';
+import { ChangelogPageGenerator } from './changelog-generator.js';
 
 interface ISyncContext {
   config: IDocsConfig;
@@ -159,6 +160,7 @@ export class DocSyncEngine {
 
       // Dev Preview track: generated ONLY for active version when branch HEAD is NOT identical to latestTag
       // AND has unreleased doc changes ahead of tag
+      let devTrackGenerated = false;
       if (latestTag && isStatusActive) {
         const isHeadSameAsTag = await GitClient.isBranchHeadSameAsTag(
           repoCacheDir,
@@ -176,38 +178,44 @@ export class DocSyncEngine {
 
           if (hasUnreleasedDocs) {
             console.log(`[DocSync] Generating Dev Preview for ${repo.id} (${version}) from origin/${version}`);
-          const { count: devCount } = await this.extractAndTransformDocs({
-            repoCacheDir,
-            ref: `origin/${version}`,
-            docRoot: repo.docRoot ?? 'docs',
-            destDir: devDestDir,
-            publicAssetDir: ctx.publicAssetDir,
-            repoId: repo.id,
-            repoRemote: repo.remote,
-            badgeLabel: `MC ${version} (Dev)`,
-            badgeVariant: 'caution',
-          });
-
-          if (devCount > 0) {
-            versionItems.push({
-              label: `Minecraft ${version} (Dev)`,
-              badge: { text: 'Dev', variant: 'caution' },
-              collapsed: true,
-              items: [
-                {
-                  autogenerate: {
-                    directory: `mods/${repo.id}/${devVersionKey}`,
-                  },
-                },
-              ],
+            const { count: devCount } = await this.extractAndTransformDocs({
+              repoCacheDir,
+              ref: `origin/${version}`,
+              docRoot: repo.docRoot ?? 'docs',
+              destDir: devDestDir,
+              publicAssetDir: ctx.publicAssetDir,
+              repoId: repo.id,
+              repoRemote: repo.remote,
+              badgeLabel: `MC ${version} (Dev)`,
+              badgeVariant: 'caution',
             });
+
+            if (devCount > 0) {
+              devTrackGenerated = true;
+              versionItems.push({
+                label: `Minecraft ${version} (Dev)`,
+                badge: { text: 'Dev', variant: 'caution' },
+                collapsed: true,
+                items: [
+                  {
+                    autogenerate: {
+                      directory: `mods/${repo.id}/${devVersionKey}`,
+                    },
+                  },
+                ],
+              });
+            }
           }
         }
       }
-    }
+
+      if (!devTrackGenerated) {
+        await fs.rm(devDestDir, { recursive: true, force: true });
+      }
   }
 
-    if (repo.lifecycle && repo.lifecycle.length > 0) {
+    const hasLifecycle = Boolean(repo.lifecycle && repo.lifecycle.length > 0);
+    if (hasLifecycle) {
       const versionsFilePath = path.join(ctx.contentBaseDir, 'mods', repo.id, 'versions.md');
       await LifecyclePageGenerator.generate({
         repo,
@@ -221,6 +229,25 @@ export class DocSyncEngine {
         link: `/mods/${repo.id}/versions/`,
         badge: { text: 'Matrix', variant: 'tip' },
       });
+    }
+
+    const changelogFilePath = path.join(ctx.contentBaseDir, 'mods', repo.id, 'changelog.md');
+    const hasChangelog = await ChangelogPageGenerator.generate({
+      repo,
+      targetFilePath: changelogFilePath,
+    });
+
+    if (hasChangelog) {
+      const changelogItem: ISidebarItem = {
+        label: 'Changelog',
+        link: `/mods/${repo.id}/changelog/`,
+        badge: { text: 'Releases', variant: 'note' },
+      };
+      if (hasLifecycle) {
+        versionItems.splice(1, 0, changelogItem);
+      } else {
+        versionItems.unshift(changelogItem);
+      }
     }
 
     if (versionItems.length === 0) return null;
@@ -324,7 +351,8 @@ export class DocSyncEngine {
       }
     }
 
-    if (repo.lifecycle && repo.lifecycle.length > 0) {
+    const hasLifecycle = Boolean(repo.lifecycle && repo.lifecycle.length > 0);
+    if (hasLifecycle) {
       const versionsFilePath = path.join(ctx.contentBaseDir, 'projects', repo.id, 'versions.md');
       await LifecyclePageGenerator.generate({
         repo,
@@ -338,6 +366,25 @@ export class DocSyncEngine {
         link: `/projects/${repo.id}/versions/`,
         badge: { text: 'Matrix', variant: 'tip' },
       });
+    }
+
+    const changelogFilePath = path.join(ctx.contentBaseDir, 'projects', repo.id, 'changelog.md');
+    const hasChangelog = await ChangelogPageGenerator.generate({
+      repo,
+      targetFilePath: changelogFilePath,
+    });
+
+    if (hasChangelog) {
+      const changelogItem: ISidebarItem = {
+        label: 'Changelog',
+        link: `/projects/${repo.id}/changelog/`,
+        badge: { text: 'Releases', variant: 'note' },
+      };
+      if (hasLifecycle) {
+        branchItems.splice(1, 0, changelogItem);
+      } else {
+        branchItems.unshift(changelogItem);
+      }
     }
 
     if (branchItems.length === 0) return null;

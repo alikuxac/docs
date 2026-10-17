@@ -86,6 +86,21 @@ if (projectGroups.length > 0) {
 			categoryLabel = String(topicData.label);
 		}
 
+		// Ensure Changelog link sits directly under Version Support
+		const vsIndex = activeProject.entries.findIndex(
+			(e) => e.type === 'link' && e.label.toLowerCase().includes('version support')
+		);
+		const clIndex = activeProject.entries.findIndex(
+			(e) => e.type === 'link' && e.label.toLowerCase().includes('changelog')
+		);
+		if (clIndex !== -1 && vsIndex !== -1 && clIndex !== vsIndex + 1) {
+			const [clEntry] = activeProject.entries.splice(clIndex, 1);
+			const newVsIndex = activeProject.entries.findIndex(
+				(e) => e.type === 'link' && e.label.toLowerCase().includes('version support')
+			);
+			activeProject.entries.splice(newVsIndex + 1, 0, clEntry);
+		}
+
 		// Mutate sidebar to ONLY render active project's sub-entries
 		Astro.locals.starlightRoute.sidebar = activeProject.entries;
 	}

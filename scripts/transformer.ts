@@ -24,9 +24,10 @@ export class DocTransformer {
       const parsed = matter(rawContent);
 
       const title = this.resolveTitle(parsed, rawContent, relativeFilePath);
-      const updatedData = this.buildFrontmatter(parsed.data, title, options);
       const cleanedBody = this.stripLeadingH1(parsed.content);
       const sanitizedBody = this.sanitizeLatexNotation(cleanedBody);
+      const updatedData = this.buildFrontmatter(parsed.data, title, sanitizedBody, options);
+
       let transformedBody = await this.rewriteAssetsAndLinks(
         sanitizedBody,
         path.dirname(sourceFilePath),
@@ -136,12 +137,142 @@ export class DocTransformer {
   private static buildFrontmatter(
     existingData: Record<string, unknown>,
     title: string,
-    _options: ITransformOptions
+    body: string,
+    options: ITransformOptions
   ): Record<string, unknown> {
+    const description = this.resolveDescription(existingData, body, title, options);
+    const keywords = this.generateKeywords(title, body, options);
+
+    const head = Array.isArray(existingData.head) ? [...existingData.head] : [];
+
+    const hasKeywords = head.some(
+      (item: unknown) =>
+        item &&
+        typeof item === 'object' &&
+        'attrs' in item &&
+        typeof (item as { attrs?: { name?: string } }).attrs?.name === 'string' &&
+        (item as { attrs: { name: string } }).attrs.name.toLowerCase() === 'keywords'
+    );
+    if (!hasKeywords && keywords) {
+      head.push({
+        tag: 'meta',
+        attrs: { name: 'keywords', content: keywords },
+      });
+    }
+
+    const hasOgType = head.some(
+      (item: unknown) =>
+        item &&
+        typeof item === 'object' &&
+        'attrs' in item &&
+        (item as { attrs?: { property?: string } }).attrs?.property === 'og:type'
+    );
+    if (!hasOgType) {
+      head.push({
+        tag: 'meta',
+        attrs: { property: 'og:type', content: 'article' },
+      });
+    }
+
     return {
       ...existingData,
       title,
+      description,
+      ...(head.length > 0 ? { head } : {}),
     };
+  }
+
+  private static resolveDescription(
+    existingData: Record<string, unknown>,
+    body: string,
+    title: string,
+    options: ITransformOptions
+  ): string {
+    if (typeof existingData.description === 'string' && existingData.description.trim().length > 0) {
+      return existingData.description.trim();
+    }
+
+    const extracted = this.extractSummaryFromBody(body);
+    if (extracted) {
+      return extracted;
+    }
+
+    const repoName = options.repoId.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    return `Technical guide and configuration documentation for ${title} in ${repoName} (${options.refName}).`;
+  }
+
+  private static extractSummaryFromBody(body: string): string | null {
+    let cleaned = body.replace(/```[\s\S]*?```/g, '');
+    cleaned = cleaned.replace(/~~~[\s\S]*?~~~/g, '');
+    cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+    cleaned = cleaned.replace(/:::[a-zA-Z0-9_-]+[\s\S]*?:::/g, '');
+    cleaned = cleaned.replace(/<[^>]+>/g, '');
+
+    const paragraphs = cleaned.split(/\n\s*\n/);
+    for (const rawPara of paragraphs) {
+      let p = rawPara.trim();
+      if (!p) continue;
+
+      if (/^(\||#|>|---|\*\*\*|___)/.test(p)) continue;
+      if (/^(!\[|<img)/.test(p)) continue;
+
+      p = p.replace(/!\[.*?\]\(.*?\)/g, '');
+      p = p.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+      p = p.replace(/`([^`]+)`/g, '$1');
+      p = p.replace(/(\*\*|__)(.*?)\1/g, '$2');
+      p = p.replace(/(\*|_)(.*?)\1/g, '$2');
+      p = p.replace(/~~(.*?)~~/g, '$1');
+      p = p.replace(/^(\*|-|\+|\d+\.)\s+/gm, '');
+      p = p.replace(/\s+/g, ' ').trim();
+
+      if (p.length >= 25) {
+        if (p.length <= 160) {
+          return p;
+        }
+        const truncated = p.slice(0, 155);
+        const lastSpace = truncated.lastIndexOf(' ');
+        const cut = lastSpace > 100 ? truncated.slice(0, lastSpace) : truncated;
+        return `${cut}...`;
+      }
+    }
+    return null;
+  }
+
+  private static generateKeywords(
+    title: string,
+    body: string,
+    options: ITransformOptions
+  ): string {
+    const keywordsSet = new Set<string>();
+
+    keywordsSet.add('minecraft');
+    keywordsSet.add('minecraft mod');
+    keywordsSet.add(options.repoId.toLowerCase());
+    keywordsSet.add(options.repoId.replace(/[-_]/g, ' ').toLowerCase());
+    keywordsSet.add(options.refName.toLowerCase());
+    keywordsSet.add('configuration');
+    keywordsSet.add('documentation');
+    keywordsSet.add('guide');
+
+    const titleClean = title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+    const titleWords = titleClean.split(/\s+/).filter((w) => w.length > 2);
+    for (const word of titleWords) {
+      keywordsSet.add(word);
+    }
+
+    const headingMatches = body.matchAll(/^#{2,3}\s+(.+)$/gm);
+    for (const match of headingMatches) {
+      const heading = match[1]
+        ?.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .trim();
+      if (heading && heading.length > 2 && heading.length < 30) {
+        keywordsSet.add(heading);
+      }
+      if (keywordsSet.size >= 12) break;
+    }
+
+    return Array.from(keywordsSet).slice(0, 15).join(', ');
   }
 
   private static async rewriteAssetsAndLinks(

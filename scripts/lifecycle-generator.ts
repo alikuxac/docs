@@ -24,10 +24,14 @@ export class LifecyclePageGenerator {
     const versionHeader = isMinecraftMod ? 'Minecraft Version' : 'Project Version';
     const loadersHeader = isMinecraftMod ? 'Mod Loaders | ' : '';
 
+    const category = ctx.repo.category ?? (isMinecraftMod ? 'Minecraft Mods' : 'Projects');
+    const topicId = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
     return [
       '---',
       `title: Version Support & Lifecycle`,
       `description: Version support matrix, release lifecycle, and compatibility for ${ctx.repo.name}.`,
+      `topic: ${topicId}`,
       '---',
       '',
       `Maintenance and compatibility status for **${ctx.repo.name}**:`,
@@ -40,6 +44,8 @@ export class LifecyclePageGenerator {
       '> - **Active (🟢)**: Actively maintained with new feature updates and bug fixes.',
       '> - **Maintenance (🟡)**: Limited support for critical or game-breaking bug fixes only.',
       '> - **EOS (🔴)**: End of Support. No further updates or patches will be released.',
+      `>`,
+      `> For full release notes and version history, see the [Changelog](${isMinecraftMod ? `/mods/${ctx.repo.id}/changelog/` : `/projects/${ctx.repo.id}/changelog/`}).`,
       '',
     ].join('\n');
   }

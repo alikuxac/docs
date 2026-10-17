@@ -17,6 +17,7 @@ export interface IBaseRepoConfig {
   docRoot?: string;
   category?: string;
   lifecycle?: IVersionLifecycle[];
+  maxChangelogEntries?: number;
 }
 
 export interface IMinecraftModRepoConfig extends IBaseRepoConfig {

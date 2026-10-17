@@ -141,4 +141,5 @@ Key Portal Specifications:
 		}),
 		disableCloudflareRocketLoader(),
 	],
-});
+}
+);
