@@ -92,13 +92,24 @@ export class DocSyncEngine {
 
     if (ctx.cleanRequested) {
       await fs.rm(path.join(ctx.publicAssetDir, repo.id), { recursive: true, force: true });
+      await fs.rm(path.join(ctx.contentBaseDir, 'mods', repo.id, 'index.md'), { force: true });
+      await fs.rm(path.join(ctx.contentBaseDir, 'mods', repo.id, 'index.mdx'), { force: true });
     }
 
     const versionItems: ISidebarItem[] = [];
     const resolvedTags = new Map<string, string>();
     const docLinks = new Map<string, string>();
 
-    for (const version of repo.versions) {
+    const hasProjectOverview = await this.syncProjectOverview(
+      repo,
+      repoCacheDir,
+      ctx,
+      'mods',
+      repo.versions[0] ?? 'main'
+    );
+
+    for (let i = 0; i < repo.versions.length; i++) {
+      const version = repo.versions[i];
       const hasBranch = await GitClient.hasBranch(repoCacheDir, version);
       if (!hasBranch) {
         console.warn(`[DocSync] Branch 'origin/${version}' not found for ${repo.id}, skipping.`);
@@ -113,7 +124,6 @@ export class DocSyncEngine {
         resolvedTags.set(version, latestTag);
       }
 
-      // Stable track: pinned to latestTag if available, otherwise branch HEAD
       const stableRef = latestTag ?? `origin/${version}`;
       const stableBadgeText = latestTag ? `MC ${version} (${latestTag})` : `MC ${version}`;
       const stableDestDir = path.join(ctx.contentBaseDir, 'mods', repo.id, version);
@@ -158,8 +168,6 @@ export class DocSyncEngine {
         });
       }
 
-      // Dev Preview track: generated ONLY for active version when branch HEAD is NOT identical to latestTag
-      // AND has unreleased doc changes ahead of tag
       let devTrackGenerated = false;
       if (latestTag && isStatusActive) {
         const isHeadSameAsTag = await GitClient.isBranchHeadSameAsTag(
@@ -212,7 +220,7 @@ export class DocSyncEngine {
       if (!devTrackGenerated) {
         await fs.rm(devDestDir, { recursive: true, force: true });
       }
-  }
+    }
 
     const hasLifecycle = Boolean(repo.lifecycle && repo.lifecycle.length > 0);
     if (hasLifecycle) {
@@ -250,6 +258,13 @@ export class DocSyncEngine {
       }
     }
 
+    if (hasProjectOverview) {
+      versionItems.unshift({
+        label: 'Overview',
+        link: `/mods/${repo.id}/`,
+      });
+    }
+
     if (versionItems.length === 0) return null;
 
     return {
@@ -273,11 +288,20 @@ export class DocSyncEngine {
 
     if (ctx.cleanRequested) {
       await fs.rm(path.join(ctx.publicAssetDir, repo.id), { recursive: true, force: true });
+      await fs.rm(path.join(ctx.contentBaseDir, 'projects', repo.id, 'index.md'), { force: true });
+      await fs.rm(path.join(ctx.contentBaseDir, 'projects', repo.id, 'index.mdx'), { force: true });
     }
 
     const branchItems: ISidebarItem[] = [];
 
-    // Stable branch
+    const hasProjectOverview = await this.syncProjectOverview(
+      repo,
+      repoCacheDir,
+      ctx,
+      'projects',
+      repo.branches.stable.branch
+    );
+
     const stableDef = repo.branches.stable;
     const stableSubPath = stableDef.subPath ?? 'stable';
     const stableTargetDir = path.join(ctx.contentBaseDir, 'projects', repo.id, stableSubPath);
@@ -311,7 +335,6 @@ export class DocSyncEngine {
       });
     }
 
-    // Development branch
     if (repo.branches.development) {
       const devDef = repo.branches.development;
       const devSubPath = devDef.subPath ?? 'dev';
@@ -387,6 +410,13 @@ export class DocSyncEngine {
       }
     }
 
+    if (hasProjectOverview) {
+      branchItems.unshift({
+        label: 'Overview',
+        link: `/projects/${repo.id}/`,
+      });
+    }
+
     if (branchItems.length === 0) return null;
 
     return {
@@ -420,16 +450,47 @@ export class DocSyncEngine {
     let firstFileRelPath: string | undefined;
 
     if (hasDocRoot) {
-      const mdFiles = await fg('**/*.{md,mdx}', { cwd: fullDocRoot });
-      if (mdFiles.length > 0) {
-        firstFileRelPath = mdFiles[0].replace(/\\/g, '/').replace(/\.(md|mdx)$/, '').toLowerCase();
+      const allMdFiles = await fg('**/*.{md,mdx}', { cwd: fullDocRoot });
+      const versionFiles: Array<{ sourcePath: string; relFile: string }> = [];
+      let localIndexFile: string | undefined;
+
+      for (const relFile of allMdFiles) {
+        const normalizedRel = relFile.replace(/\\/g, '/');
+        const parts = normalizedRel.split('/');
+
+        if (parts.length === 1 && /^index\.(md|mdx)$/i.test(parts[0])) {
+          localIndexFile = path.join(fullDocRoot, relFile);
+          continue;
+        }
+        if (parts.length === 1 && /^readme\.(md|mdx)$/i.test(parts[0])) {
+          if (!localIndexFile) {
+            localIndexFile = path.join(fullDocRoot, relFile);
+          }
+          continue;
+        }
+
+        let targetRelFile: string;
+        if (parts.length === 1) {
+          targetRelFile = parts[0];
+        } else if (parts.length === 2) {
+          targetRelFile = normalizedRel;
+        } else {
+          const [folder, ...subParts] = parts;
+          targetRelFile = `${folder}/${subParts.join('-')}`;
+          console.log(`[DocSync] Flattening deeper nested file '${normalizedRel}' to 1 folder: '${targetRelFile}'`);
+        }
+
+        versionFiles.push({
+          sourcePath: path.join(fullDocRoot, relFile),
+          relFile: targetRelFile,
+        });
       }
-      for (const relFile of mdFiles) {
-        const sourcePath = path.join(fullDocRoot, relFile);
-        await DocTransformer.processFile(sourcePath, relFile, {
+
+      if (versionFiles.length === 0 && localIndexFile) {
+        await DocTransformer.processFile(localIndexFile, 'index.md', {
           repoId: params.repoId,
           refName: params.ref.replace(/^origin\//, ''),
-          sourceDocRoot: fullDocRoot,
+          sourceDocRoot: path.dirname(localIndexFile),
           destDocDir: params.destDir,
           publicAssetDir: params.publicAssetDir,
           repoRemoteUrl: params.repoRemote,
@@ -437,9 +498,26 @@ export class DocSyncEngine {
           badgeVariant: params.badgeVariant,
         });
         count++;
+        firstFileRelPath = '';
+      } else {
+        for (const item of versionFiles) {
+          if (!firstFileRelPath) {
+            firstFileRelPath = item.relFile.replace(/\\/g, '/').replace(/\.(md|mdx)$/, '').toLowerCase();
+          }
+          await DocTransformer.processFile(item.sourcePath, item.relFile, {
+            repoId: params.repoId,
+            refName: params.ref.replace(/^origin\//, ''),
+            sourceDocRoot: fullDocRoot,
+            destDocDir: params.destDir,
+            publicAssetDir: params.publicAssetDir,
+            repoRemoteUrl: params.repoRemote,
+            badgeLabel: params.badgeLabel,
+            badgeVariant: params.badgeVariant,
+          });
+          count++;
+        }
       }
     } else {
-      // Fallback: check README.md in root
       const rootReadme = path.join(params.repoCacheDir, 'README.md');
       const hasReadme = await this.checkFile(rootReadme);
       if (hasReadme) {
@@ -458,6 +536,58 @@ export class DocSyncEngine {
       }
     }
     return { count, firstFileRelPath };
+  }
+
+  private static async syncProjectOverview(
+    repo: IMinecraftModRepoConfig | IStandardRepoConfig,
+    repoCacheDir: string,
+    ctx: ISyncContext,
+    contentType: 'mods' | 'projects',
+    fallbackBranch: string
+  ): Promise<boolean> {
+    const defaultBranch = await GitClient.getDefaultBranch(repoCacheDir, fallbackBranch);
+    await GitClient.checkoutSparse(repoCacheDir, `origin/${defaultBranch}`, repo.docRoot ?? 'docs');
+
+    const docRootDir = path.join(repoCacheDir, repo.docRoot ?? 'docs');
+    let overviewSourcePath: string | undefined;
+
+    const indexCandidates = ['index.md', 'index.mdx', 'readme.md', 'README.md'];
+    for (const cand of indexCandidates) {
+      const p = path.join(docRootDir, cand);
+      if (await this.checkFile(p)) {
+        overviewSourcePath = p;
+        break;
+      }
+    }
+
+    if (!overviewSourcePath) {
+      const rootReadmeCandidates = ['README.md', 'readme.md', 'Readme.md'];
+      for (const cand of rootReadmeCandidates) {
+        const p = path.join(repoCacheDir, cand);
+        if (await this.checkFile(p)) {
+          overviewSourcePath = p;
+          break;
+        }
+      }
+    }
+
+    if (!overviewSourcePath) {
+      return false;
+    }
+
+    const overviewDestDir = path.join(ctx.contentBaseDir, contentType, repo.id);
+    await DocTransformer.processFile(overviewSourcePath, 'index.md', {
+      repoId: repo.id,
+      refName: defaultBranch,
+      sourceDocRoot: path.dirname(overviewSourcePath),
+      destDocDir: overviewDestDir,
+      publicAssetDir: ctx.publicAssetDir,
+      repoRemoteUrl: repo.remote,
+      isProjectOverview: true,
+      fallbackTitle: repo.name,
+    });
+    console.log(`[DocSync] Generated project overview for ${repo.name} at: ${overviewDestDir}`);
+    return true;
   }
 
   private static async writeSidebarOutput(groups: ISidebarGroup[]): Promise<void> {

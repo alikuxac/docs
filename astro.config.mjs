@@ -121,7 +121,7 @@ Key Portal Specifications:
 - Mod configs are documented across versions (e.g. 1.21.1) and loaders (NeoForge, Forge, Fabric).
 - Synchronized with active Git repositories and release tags.
 					`.trim(),
-					promote: ['about*', 'mods/**/configuration*', 'mods/**/versions*'],
+					promote: ['about*', 'mods/**/index*', 'mods/**/configuration*', 'mods/**/versions*'],
 					customSets: [
 						{
 							label: 'Core Overview & Guidelines',

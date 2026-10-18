@@ -67,6 +67,33 @@ export class GitClient {
     }
   }
 
+  public static async getDefaultBranch(
+    repoDir: string,
+    fallbackBranch = 'main'
+  ): Promise<string> {
+    try {
+      const output = await this.runGit(['symbolic-ref', 'refs/remotes/origin/HEAD'], {
+        cwd: repoDir,
+      });
+      const branch = output.trim().replace(/^refs\/remotes\/origin\//, '');
+      if (branch) return branch;
+    } catch {
+      try {
+        await this.runGit(['remote', 'set-head', 'origin', '-a'], { cwd: repoDir });
+        const output = await this.runGit(['symbolic-ref', 'refs/remotes/origin/HEAD'], {
+          cwd: repoDir,
+        });
+        const branch = output.trim().replace(/^refs\/remotes\/origin\//, '');
+        if (branch) return branch;
+      } catch {
+      }
+    }
+
+    if (await this.hasBranch(repoDir, 'main')) return 'main';
+    if (await this.hasBranch(repoDir, 'master')) return 'master';
+    return fallbackBranch;
+  }
+
   public static async hasBranch(repoDir: string, branch: string): Promise<boolean> {
     try {
       const output = await this.runGit(['branch', '-r', '--list', `origin/${branch}`], {

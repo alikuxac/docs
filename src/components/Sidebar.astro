@@ -101,6 +101,15 @@ if (projectGroups.length > 0) {
 			activeProject.entries.splice(newVsIndex + 1, 0, clEntry);
 		}
 
+		// Ensure Overview link sits at the top of the project sidebar
+		const ovIndex = activeProject.entries.findIndex(
+			(e) => e.type === 'link' && e.label.toLowerCase() === 'overview'
+		);
+		if (ovIndex > 0) {
+			const [ovEntry] = activeProject.entries.splice(ovIndex, 1);
+			activeProject.entries.unshift(ovEntry);
+		}
+
 		// Mutate sidebar to ONLY render active project's sub-entries
 		Astro.locals.starlightRoute.sidebar = activeProject.entries;
 	}

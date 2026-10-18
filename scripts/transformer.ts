@@ -11,6 +11,8 @@ export interface ITransformOptions {
   repoRemoteUrl: string;
   badgeLabel?: string;
   badgeVariant?: 'note' | 'tip' | 'danger' | 'caution' | 'success' | 'default';
+  isProjectOverview?: boolean;
+  fallbackTitle?: string;
 }
 
 export class DocTransformer {
@@ -23,7 +25,7 @@ export class DocTransformer {
       const rawContent = await fs.readFile(sourceFilePath, 'utf-8');
       const parsed = matter(rawContent);
 
-      const title = this.resolveTitle(parsed, rawContent, relativeFilePath);
+      const title = this.resolveTitle(parsed, rawContent, relativeFilePath, options);
       const cleanedBody = this.stripLeadingH1(parsed.content);
       const sanitizedBody = this.sanitizeLatexNotation(cleanedBody);
       const updatedData = this.buildFrontmatter(parsed.data, title, sanitizedBody, options);
@@ -121,16 +123,25 @@ export class DocTransformer {
   private static resolveTitle(
     parsed: matter.GrayMatterFile<string>,
     rawContent: string,
-    relativeFilePath: string
+    relativeFilePath: string,
+    options?: ITransformOptions
   ): string {
-    if (parsed.data.title && typeof parsed.data.title === 'string') {
-      return parsed.data.title;
+    if (parsed.data.title && typeof parsed.data.title === 'string' && parsed.data.title.trim().length > 0) {
+      return parsed.data.title.trim();
     }
     const headingMatch = rawContent.match(/^#\s+(.+)$/m);
     if (headingMatch?.[1]) {
       return headingMatch[1].trim();
     }
     const baseName = path.basename(relativeFilePath, path.extname(relativeFilePath));
+    if (baseName.toLowerCase() === 'index' || baseName.toLowerCase() === 'readme') {
+      if (options?.fallbackTitle) {
+        return options.fallbackTitle;
+      }
+      if (options?.repoId) {
+        return options.repoId.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+    }
     return baseName.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
@@ -197,7 +208,10 @@ export class DocTransformer {
       return extracted;
     }
 
-    const repoName = options.repoId.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const repoName = options.fallbackTitle ?? options.repoId.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    if (options.isProjectOverview) {
+      return `Technical overview, architecture, and documentation guide for ${repoName}.`;
+    }
     return `Technical guide and configuration documentation for ${title} in ${repoName} (${options.refName}).`;
   }
 
@@ -254,6 +268,11 @@ export class DocTransformer {
     keywordsSet.add('documentation');
     keywordsSet.add('guide');
 
+    if (options.isProjectOverview) {
+      keywordsSet.add('overview');
+      keywordsSet.add('project overview');
+    }
+
     const titleClean = title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
     const titleWords = titleClean.split(/\s+/).filter((w) => w.length > 2);
     for (const word of titleWords) {
@@ -296,19 +315,24 @@ export class DocTransformer {
 
     for (const match of matches) {
       const [fullMatch, alt, rawUrl] = match;
-      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('/')) {
+      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('/') || rawUrl.startsWith('data:')) {
         continue;
       }
       const localAssetPath = path.resolve(sourceFileDir, rawUrl);
       const isFile = await this.checkFileExists(localAssetPath);
       if (!isFile) continue;
 
-      const assetSubPath = path.join(options.repoId, options.refName, path.basename(rawUrl));
+      const relToDocRoot = path.relative(options.sourceDocRoot, localAssetPath);
+      const safeRelAssetPath = relToDocRoot.startsWith('..')
+        ? path.basename(rawUrl)
+        : relToDocRoot.replace(/\\/g, '/');
+
+      const assetSubPath = path.join(options.repoId, options.refName, safeRelAssetPath);
       const targetPublicPath = path.join(options.publicAssetDir, assetSubPath);
       await fs.mkdir(path.dirname(targetPublicPath), { recursive: true });
       await fs.copyFile(localAssetPath, targetPublicPath);
 
-      const webPath = `/docs-assets/${options.repoId}/${options.refName}/${path.basename(rawUrl)}`;
+      const webPath = `/docs-assets/${options.repoId}/${options.refName}/${safeRelAssetPath}`;
       modified = modified.replace(fullMatch, `![${alt}](${webPath})`);
     }
     return modified;
@@ -318,14 +342,24 @@ export class DocTransformer {
     content: string,
     options: ITransformOptions
   ): string {
-    const linkRegex = /\[([^\]]+)\]\(((\.\.\/|\.\/)[^)]+)\)/g;
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     const cleanRemote = options.repoRemoteUrl.replace(/\.git$/, '');
 
     return content.replace(linkRegex, (match, text, url) => {
+      if (
+        url.startsWith('http://') ||
+        url.startsWith('https://') ||
+        url.startsWith('/') ||
+        url.startsWith('#') ||
+        url.startsWith('mailto:')
+      ) {
+        return match;
+      }
       if (url.endsWith('.md') || url.endsWith('.mdx')) {
         return match;
       }
-      const githubUrl = `${cleanRemote}/blob/${options.refName}/${url.replace(/^\.\//, '')}`;
+      const cleanPath = url.replace(/^\.\//, '');
+      const githubUrl = `${cleanRemote}/blob/${options.refName}/${cleanPath}`;
       return `[${text}](${githubUrl})`;
     });
   }
