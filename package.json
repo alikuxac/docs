@@ -1,7 +1,7 @@
 {
   "name": "docs",
   "type": "module",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -20,8 +20,11 @@
     "@astrojs/starlight": "^0.42.6",
     "astro": "^7.2.10",
     "astro-mermaid": "^2.1.0",
+    "katex": "^0.19.0",
     "mermaid": "^11.17.2",
+    "rehype-katex": "^7.0.1",
     "remark-github-blockquote-alert": "^2.1.0",
+    "remark-math": "^6.0.0",
     "sharp": "^0.35.3",
     "starlight-image-zoom": "^0.16.2",
     "starlight-links-validator": "^0.27.0",

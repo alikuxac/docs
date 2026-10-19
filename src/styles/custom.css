@@ -935,21 +935,55 @@ dialog {
    -------------------------------------------------------------------------- */
 
 .mermaid {
-	display: flex;
-	justify-content: center;
-	align-items: center;
+	display: block;
 	padding: 1.5rem;
 	background: rgba(20, 13, 39, 0.7);
 	border: 1px solid var(--sl-color-hairline);
 	border-radius: 12px;
 	margin: 1.5rem 0;
 	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	text-align: center;
+}
+
+.mermaid svg {
+	display: inline-block;
+	margin: 0 auto;
+	max-width: none !important;
+	height: auto;
+	vertical-align: middle;
+}
+
+.mermaid::-webkit-scrollbar {
+	height: 6px;
+}
+
+.mermaid::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.05);
+	border-radius: 9999px;
+}
+
+.mermaid::-webkit-scrollbar-thumb {
+	background: rgba(168, 85, 247, 0.4);
+	border-radius: 9999px;
+}
+
+.mermaid::-webkit-scrollbar-thumb:hover {
+	background: rgba(168, 85, 247, 0.7);
 }
 
 :root[data-theme='light'] .mermaid {
 	background: #ffffff !important;
 	border-color: rgba(168, 85, 247, 0.2) !important;
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme='light'] .mermaid::-webkit-scrollbar-track {
+	background: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme='light'] .mermaid::-webkit-scrollbar-thumb {
+	background: rgba(168, 85, 247, 0.3);
 }
 
 /* --------------------------------------------------------------------------
@@ -1226,3 +1260,19 @@ dialog {
 	border-color: rgba(168, 85, 247, 0.25);
 	color: #64748b;
 }
+
+/* --------------------------------------------------------------------------
+   KaTeX Equations Styling
+   -------------------------------------------------------------------------- */
+
+.katex-display {
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 0.75rem 0;
+	-webkit-overflow-scrolling: touch;
+}
+
+.katex {
+	font-size: 1.15em;
+}
+

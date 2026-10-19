@@ -9,6 +9,8 @@ import starlightImageZoom from 'starlight-image-zoom';
 import starlightLlmsTxt from 'starlight-llms-txt';
 import { unified } from '@astrojs/markdown-remark';
 import { remarkAlert } from 'remark-github-blockquote-alert';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import fg from 'fast-glob';
 import * as fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -49,7 +51,8 @@ export default defineConfig({
 	site: 'https://docs.alikuxac.xyz',
 	markdown: {
 		processor: unified({
-			remarkPlugins: [remarkAlert],
+			remarkPlugins: [remarkAlert, remarkMath],
+			rehypePlugins: [rehypeKatex],
 		}),
 	},
 	vite: {
@@ -74,9 +77,20 @@ export default defineConfig({
 				flowchart: {
 					curve: 'basis',
 					htmlLabels: true,
+					useMaxWidth: false,
 				},
 				sequence: {
 					mirrorActors: false,
+					useMaxWidth: false,
+				},
+				class: {
+					useMaxWidth: false,
+				},
+				state: {
+					useMaxWidth: false,
+				},
+				er: {
+					useMaxWidth: false,
 				},
 			},
 		}),
@@ -86,6 +100,7 @@ export default defineConfig({
 			customCss: [
 				'./src/styles/custom.css',
 				'remark-github-blockquote-alert/alert.css',
+				'katex/dist/katex.min.css',
 			],
 			components: {
 				ThemeProvider: './src/components/ThemeProvider.astro',
