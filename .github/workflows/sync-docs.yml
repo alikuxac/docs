@@ -7,13 +7,8 @@ on:
   repository_dispatch:
     types: [sync-docs, doc-updated]
   push:
-    branches:
-      - master
-      - main
-    paths-ignore:
-      - 'README.md'
-      - '.vscode/**'
-      - '.gitignore'
+    tags:
+      - '*'
   workflow_dispatch:
     inputs:
       force:
@@ -133,7 +128,7 @@ jobs:
         run: |
           pnpm wrangler pages deploy dist \
             --project-name="${{ vars.CLOUDFLARE_PROJECT_NAME || 'alikuxac-docs' }}" \
-            --branch="${{ github.ref_name || 'master' }}" \
+            --branch="${{ github.ref_type == 'tag' && 'master' || github.ref_name || 'master' }}" \
             --commit-dirty=true
 
       - name: Save Updated Remote Hashes Cache

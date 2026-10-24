@@ -25,6 +25,7 @@ export interface IMinecraftModRepoConfig extends IBaseRepoConfig {
   versions: string[];
   versionBranchPattern?: string;
   tagStrategy?: 'branch-head' | 'latest-tag';
+  tagPattern?: string;
 }
 
 export interface IStandardBranchDef {

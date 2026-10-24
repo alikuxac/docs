@@ -119,7 +119,15 @@ export class DocSyncEngine {
       const lifecycleEntry = repo.lifecycle?.find((l) => l.version === version);
       const isStatusActive = !lifecycleEntry || lifecycleEntry.status === 'active';
 
-      const latestTag = await GitClient.getLatestTagOnBranch(repoCacheDir, version);
+      const useTags = repo.tagStrategy !== 'branch-head';
+      const latestTag = useTags
+        ? await GitClient.getLatestTagOnBranch(repoCacheDir, version, {
+            version,
+            allKnownVersions: repo.versions,
+            tagPattern: repo.tagPattern,
+          })
+        : null;
+
       if (latestTag) {
         resolvedTags.set(version, latestTag);
       }

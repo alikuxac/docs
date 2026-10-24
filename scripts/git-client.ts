@@ -10,6 +10,12 @@ export interface IExecGitOptions {
   maxBuffer?: number;
 }
 
+export interface IGetLatestTagOptions {
+  version?: string;
+  allKnownVersions?: string[];
+  tagPattern?: string;
+}
+
 export class GitClient {
   public static async runGit(args: string[], options: IExecGitOptions = {}): Promise<string> {
     try {
@@ -51,9 +57,23 @@ export class GitClient {
     await this.runGit(['checkout', ref, '--force'], { cwd: repoDir });
   }
 
+  public static async isTagAncestorOf(
+    repoDir: string,
+    tag: string,
+    ref: string
+  ): Promise<boolean> {
+    try {
+      await this.runGit(['merge-base', '--is-ancestor', tag, ref], { cwd: repoDir });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   public static async getLatestTagOnBranch(
     repoDir: string,
-    branch: string
+    branch: string,
+    options: IGetLatestTagOptions = {}
   ): Promise<string | null> {
     try {
       const output = await this.runGit(
@@ -61,7 +81,70 @@ export class GitClient {
         { cwd: repoDir }
       );
       const tags = output.split('\n').map((t) => t.trim()).filter(Boolean);
-      return tags.length > 0 ? tags[0] : null;
+      if (tags.length === 0) return null;
+
+      const { version, allKnownVersions = [], tagPattern } = options;
+
+      const escapeRegex = (str: string): string =>
+        str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      let customRegex: RegExp | null = null;
+      if (tagPattern) {
+        try {
+          customRegex = new RegExp(tagPattern);
+        } catch {
+          console.warn(`[GitClient] Invalid tagPattern regex: ${tagPattern}`);
+        }
+      }
+
+      for (const tag of tags) {
+        if (customRegex && !customRegex.test(tag)) {
+          continue;
+        }
+
+        if (version) {
+          const versionRegex = new RegExp(`(?<![0-9.])${escapeRegex(version)}(?![0-9.])`);
+          if (versionRegex.test(tag)) {
+            return tag;
+          }
+
+          // If the tag matches another known sibling version, it strictly belongs to that sibling branch
+          let belongsToSibling = false;
+          for (const otherVer of allKnownVersions) {
+            if (otherVer !== version) {
+              const otherRegex = new RegExp(`(?<![0-9.])${escapeRegex(otherVer)}(?![0-9.])`);
+              if (otherRegex.test(tag)) {
+                belongsToSibling = true;
+                break;
+              }
+            }
+          }
+          if (belongsToSibling) {
+            continue;
+          }
+
+          // For tags without any version in the name, check if already present on ancestor sibling branches
+          let isSiblingAncestor = false;
+          for (const otherVer of allKnownVersions) {
+            if (otherVer !== version) {
+              const hasSibling = await this.hasBranch(repoDir, otherVer);
+              if (hasSibling && (await this.isTagAncestorOf(repoDir, tag, `origin/${otherVer}`))) {
+                isSiblingAncestor = true;
+                break;
+              }
+            }
+          }
+          if (isSiblingAncestor) {
+            continue;
+          }
+
+          return tag;
+        }
+
+        return tag;
+      }
+
+      return null;
     } catch {
       return null;
     }

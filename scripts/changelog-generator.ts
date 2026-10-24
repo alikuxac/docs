@@ -94,15 +94,28 @@ export class ChangelogPageGenerator {
   public static extractMcVersion(release: IGitHubRelease, knownVersions: string[] = []): string {
     const rawTag = release.tag_name || '';
     const rawName = release.name || '';
-    const combined = `${rawTag} ${rawName}`;
 
-    for (const v of knownVersions) {
-      if (rawTag.includes(v) || rawName.includes(v)) {
+    const escapeRegex = (str: string): string =>
+      str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const sortedVersions = [...knownVersions].sort((a, b) => b.length - a.length);
+
+    for (const v of sortedVersions) {
+      const vRegex = new RegExp(`(?<![0-9.])${escapeRegex(v)}(?![0-9.])`);
+      if (vRegex.test(rawTag)) {
         return v;
       }
     }
 
-    const match = combined.match(/(?:^|[+._\s-])(1\.\d+(?:\.\d+)?)/);
+    for (const v of sortedVersions) {
+      const vRegex = new RegExp(`(?<![0-9.])${escapeRegex(v)}(?![0-9.])`);
+      if (vRegex.test(rawName)) {
+        return v;
+      }
+    }
+
+    const combined = `${rawTag} ${rawName}`;
+    const match = combined.match(/(?<![0-9.])(\d+(?:\.\d+)+(?:-[a-zA-Z0-9.]+)?)(?![0-9.])/);
     if (match) return match[1];
 
     return 'other';

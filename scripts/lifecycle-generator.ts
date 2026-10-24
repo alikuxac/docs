@@ -51,7 +51,8 @@ export class LifecyclePageGenerator {
   }
 
   private static buildRow(item: IVersionLifecycle, ctx: ILifecycleContext): string {
-    const latestTag = ctx.resolvedTags.get(item.version) ?? item.releaseTag ?? '—';
+    const rawTag = ctx.resolvedTags.get(item.version) ?? item.releaseTag;
+    const tagCell = rawTag ? `\`${rawTag}\`` : '—';
     const statusBadge = this.formatStatus(item.status);
     const docLink = ctx.docLinks.get(item.version);
     const docCell = docLink ? `[View Docs](${docLink})` : '—';
@@ -59,10 +60,10 @@ export class LifecyclePageGenerator {
 
     if (ctx.repo.type === 'minecraft-mod') {
       const loadersCell = item.loaders && item.loaders.length > 0 ? item.loaders.join(', ') : '—';
-      return `| **${item.version}** | \`${latestTag}\` | ${statusBadge} | ${loadersCell} | ${docCell} | ${notesCell} |`;
+      return `| **${item.version}** | ${tagCell} | ${statusBadge} | ${loadersCell} | ${docCell} | ${notesCell} |`;
     }
 
-    return `| **${item.version}** | \`${latestTag}\` | ${statusBadge} | ${docCell} | ${notesCell} |`;
+    return `| **${item.version}** | ${tagCell} | ${statusBadge} | ${docCell} | ${notesCell} |`;
   }
 
   private static formatStatus(status: SupportStatus): string {
