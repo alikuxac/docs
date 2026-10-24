@@ -12,9 +12,15 @@ export const docsConfig: IDocsConfig = {
       category: 'Minecraft Mods',
       remote: 'https://github.com/alikuxac/MachineMetrics.git',
       docRoot: 'docs',
-      versions: ['1.21.1'],
+      versions: ['1.21.1', '26.1.2'],
       tagStrategy: 'latest-tag',
       lifecycle: [
+        {
+          version: '26.1.2',
+          status: 'active',
+          loaders: ['NeoForge'],
+          notes: 'In development',
+        },
         {
           version: '1.21.1',
           status: 'active',
