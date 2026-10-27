@@ -185,42 +185,33 @@ export class DocSyncEngine {
         );
 
         if (!isHeadSameAsTag) {
-          const hasUnreleasedDocs = await GitClient.hasDocDiffBetween(
+          console.log(`[DocSync] Generating Dev Preview for ${repo.id} (${version}) from origin/${version}`);
+          const { count: devCount } = await this.extractAndTransformDocs({
             repoCacheDir,
-            latestTag,
-            `origin/${version}`,
-            repo.docRoot ?? 'docs'
-          );
+            ref: `origin/${version}`,
+            docRoot: repo.docRoot ?? 'docs',
+            destDir: devDestDir,
+            publicAssetDir: ctx.publicAssetDir,
+            repoId: repo.id,
+            repoRemote: repo.remote,
+            badgeLabel: `MC ${version} (Dev)`,
+            badgeVariant: 'caution',
+          });
 
-          if (hasUnreleasedDocs) {
-            console.log(`[DocSync] Generating Dev Preview for ${repo.id} (${version}) from origin/${version}`);
-            const { count: devCount } = await this.extractAndTransformDocs({
-              repoCacheDir,
-              ref: `origin/${version}`,
-              docRoot: repo.docRoot ?? 'docs',
-              destDir: devDestDir,
-              publicAssetDir: ctx.publicAssetDir,
-              repoId: repo.id,
-              repoRemote: repo.remote,
-              badgeLabel: `MC ${version} (Dev)`,
-              badgeVariant: 'caution',
-            });
-
-            if (devCount > 0) {
-              devTrackGenerated = true;
-              versionItems.push({
-                label: `Minecraft ${version} (Dev)`,
-                badge: { text: 'Dev', variant: 'caution' },
-                collapsed: true,
-                items: [
-                  {
-                    autogenerate: {
-                      directory: `mods/${repo.id}/${devVersionKey}`,
-                    },
+          if (devCount > 0) {
+            devTrackGenerated = true;
+            versionItems.push({
+              label: `Minecraft ${version} (Dev)`,
+              badge: { text: 'Dev', variant: 'caution' },
+              collapsed: true,
+              items: [
+                {
+                  autogenerate: {
+                    directory: `mods/${repo.id}/${devVersionKey}`,
                   },
-                ],
-              });
-            }
+                },
+              ],
+            });
           }
         }
       }
