@@ -13,6 +13,18 @@ import { GitClient } from './git-client.js';
 import { DocTransformer } from './transformer.js';
 import { LifecyclePageGenerator } from './lifecycle-generator.js';
 import { ChangelogPageGenerator } from './changelog-generator.js';
+import { slug } from 'github-slugger';
+
+export function toAstroSlug(relPath: string): string {
+  const normalized = relPath.replace(/\\/g, '/').replace(/\.(md|mdx)$/, '');
+  if (normalized === 'index') return '';
+  return normalized
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => slug(segment))
+    .join('/')
+    .replace(/\/index$/, '');
+}
 
 interface ISyncContext {
   config: IDocsConfig;
@@ -156,9 +168,10 @@ export class DocSyncEngine {
       });
 
       if (stableCount > 0) {
-        const slugVersion = version.replace(/\./g, '');
-        const link = firstFileRelPath
-          ? `/mods/${repo.id}/${slugVersion}/${firstFileRelPath}/`
+        const slugVersion = toAstroSlug(version);
+        const slugRelPath = firstFileRelPath ? toAstroSlug(firstFileRelPath) : '';
+        const link = slugRelPath
+          ? `/mods/${repo.id}/${slugVersion}/${slugRelPath}/`
           : `/mods/${repo.id}/${slugVersion}/`;
         docLinks.set(version, link);
 
@@ -501,7 +514,7 @@ export class DocSyncEngine {
       } else {
         for (const item of versionFiles) {
           if (!firstFileRelPath) {
-            firstFileRelPath = item.relFile.replace(/\\/g, '/').replace(/\.(md|mdx)$/, '').toLowerCase();
+            firstFileRelPath = toAstroSlug(item.relFile);
           }
           await DocTransformer.processFile(item.sourcePath, item.relFile, {
             repoId: params.repoId,
