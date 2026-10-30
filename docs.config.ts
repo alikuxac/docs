@@ -47,6 +47,24 @@ export const docsConfig: IDocsConfig = {
         },
       ],
     },
+    {
+      id: 'alchemy-2048',
+      name: 'Alchemy 2048',
+      type: 'minecraft-mod',
+      category: 'Minecraft Mods',
+      remote: 'https://github.com/alikuxac/Alchemy2048.git',
+      docRoot: 'docs',
+      versions: ['1.21.1'],
+      tagStrategy: 'latest-tag',
+      lifecycle: [
+        {
+          version: '1.21.1',
+          status: 'active',
+          loaders: ['NeoForge', "Forge"],
+          notes: 'Active development branch',
+        },
+      ],
+    }
   ],
 };
 
