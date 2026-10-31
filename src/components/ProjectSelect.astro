@@ -66,33 +66,31 @@ const { options, categoryLabel = 'Project' } = Astro.props;
 		gap: 0.35rem;
 		margin: 0.5rem 0 1rem 0;
 		padding: 0.5rem 0.65rem;
-		background: #140d27;
-		border: 1px solid var(--sl-color-hairline, rgba(168, 85, 247, 0.15));
+		background: var(--sl-color-bg-sidebar, #09090b);
+		border: 1px solid var(--sl-color-hairline, rgba(255, 255, 255, 0.1));
 		border-radius: 0.5rem;
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
 		transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 	}
 
 	.project-switcher-container:hover,
 	.project-switcher-container:focus-within {
 		z-index: 40;
-		border-color: var(--sl-color-accent, #a855f7);
-		box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
-		background: #181130;
+		border-color: rgba(255, 255, 255, 0.3);
+		box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+		background: #121214;
 	}
 
 	:root[data-theme='light'] .project-switcher-container {
 		background: #ffffff;
-		border-color: rgba(168, 85, 247, 0.25);
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+		border-color: rgba(0, 0, 0, 0.08);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 	}
 
 	:root[data-theme='light'] .project-switcher-container:hover,
 	:root[data-theme='light'] .project-switcher-container:focus-within {
 		background: #ffffff;
-		border-color: var(--sl-color-accent, #9333ea);
-		box-shadow: 0 0 0 1px rgba(147, 51, 234, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+		border-color: rgba(0, 0, 0, 0.25);
+		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
 	}
 
 	.project-switcher-header {
@@ -109,11 +107,11 @@ const { options, categoryLabel = 'Project' } = Astro.props;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		color: var(--sl-color-accent-high, #c084fc);
+		color: var(--sl-color-gray-3, #a1a1aa);
 	}
 
 	:root[data-theme='light'] .switcher-badge {
-		color: var(--sl-color-accent, #9333ea);
+		color: var(--sl-color-gray-3, #52525b);
 	}
 
 	.select-wrapper {
@@ -132,7 +130,7 @@ const { options, categoryLabel = 'Project' } = Astro.props;
 		-webkit-appearance: none;
 		background: transparent;
 		border: none;
-		color: var(--sl-color-white, #f8fafc);
+		color: var(--sl-color-white, #f4f4f5);
 		font-family: var(--sl-font);
 		font-size: var(--sl-text-sm, 0.875rem);
 		font-weight: 600;
@@ -142,19 +140,19 @@ const { options, categoryLabel = 'Project' } = Astro.props;
 	}
 
 	:root[data-theme='light'] .project-select {
-		color: var(--sl-color-gray-1, #1e293b);
+		color: var(--sl-color-gray-1, #09090b);
 	}
 
 	.project-select option {
-		background: #140d27;
-		color: #f8fafc;
+		background: #09090b;
+		color: #f4f4f5;
 		font-weight: 500;
 		padding: 0.5rem;
 	}
 
 	:root[data-theme='light'] .project-select option {
 		background: #ffffff;
-		color: #0f172a;
+		color: #09090b;
 	}
 
 	.caret-indicator {
@@ -164,17 +162,21 @@ const { options, categoryLabel = 'Project' } = Astro.props;
 		display: flex;
 		align-items: center;
 		pointer-events: none;
-		color: var(--sl-color-gray-3, #c084fc);
+		color: var(--sl-color-gray-3, #a1a1aa);
 		transition: color 0.15s ease, transform 0.15s ease;
 	}
 
 	:root[data-theme='light'] .caret-indicator {
-		color: #9333ea;
+		color: #52525b;
 	}
 
 	.project-switcher-container:hover .caret-indicator {
-		color: var(--sl-color-accent, #a855f7);
+		color: #ffffff;
 		transform: translateY(1px);
+	}
+
+	:root[data-theme='light'] .project-switcher-container:hover .caret-indicator {
+		color: #09090b;
 	}
 
 	.sr-only {
