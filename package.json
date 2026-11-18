@@ -1,13 +1,14 @@
 {
   "name": "docs",
   "type": "module",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
     "docs:sync": "tsx scripts/sync-docs.ts",
     "docs:dispatch": "tsx scripts/trigger-dispatch.ts",
     "docs:check-changes": "tsx scripts/check-remote-changes.ts",
+    "docs:submit-indexing": "tsx scripts/submit-indexing.ts",
     "prebuild": "pnpm docs:sync",
     "build": "astro build",
     "deploy:cf": "wrangler pages deploy dist",

@@ -47,10 +47,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: Restore Remote Hashes Cache
+      - name: Restore Remote Hashes and Sitemap Metadata Cache
         uses: actions/cache/restore@v4
         with:
-          path: .cache/remote-hashes.json
+          path: |
+            .cache/remote-hashes.json
+            .cache/sitemap-metadata.json
           key: docs-remote-hashes-${{ github.run_id }}
           restore-keys: |
             docs-remote-hashes-
@@ -131,9 +133,19 @@ jobs:
             --branch="${{ github.ref_type == 'tag' && 'master' || github.ref_name || 'master' }}" \
             --commit-dirty=true
 
-      - name: Save Updated Remote Hashes Cache
+      - name: Submit Changed URLs to Search Engines (IndexNow)
+        if: steps.check_changes.outputs.has_changes == 'true'
+        shell: bash
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: |
+          pnpm docs:submit-indexing
+
+      - name: Save Updated Remote Hashes and Sitemap Metadata Cache
         if: steps.check_changes.outputs.has_changes == 'true'
         uses: actions/cache/save@v4
         with:
-          path: .cache/remote-hashes.json
+          path: |
+            .cache/remote-hashes.json
+            .cache/sitemap-metadata.json
           key: docs-remote-hashes-${{ github.run_id }}

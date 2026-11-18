@@ -16,6 +16,7 @@ import * as fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import { loadSidebarTopics } from './src/utils/sidebar-loader.ts';
+import { docsSeoIntegration, getSerializedSitemapItem } from './src/utils/seo-manager.ts';
 
 const isLinksValidationEnabled = process.env.CHECK_LINKS !== 'false';
 
@@ -108,6 +109,39 @@ export default defineConfig({
 				Pagination: './src/components/Pagination.astro',
 				Sidebar: './src/components/Sidebar.astro',
 			},
+			head: [
+				{
+					tag: 'link',
+					attrs: {
+						rel: 'alternate',
+						type: 'application/rss+xml',
+						title: 'Alikuxac Documentation Updates',
+						href: '/rss.xml',
+					},
+				},
+				...(process.env.PUBLIC_GOOGLE_SITE_VERIFICATION
+					? [
+							{
+								tag: 'meta',
+								attrs: {
+									name: 'google-site-verification',
+									content: process.env.PUBLIC_GOOGLE_SITE_VERIFICATION,
+								},
+							},
+						]
+					: []),
+				...(process.env.PUBLIC_BING_SITE_VERIFICATION
+					? [
+							{
+								tag: 'meta',
+								attrs: {
+									name: 'msvalidate.01',
+									content: process.env.PUBLIC_BING_SITE_VERIFICATION,
+								},
+							},
+						]
+					: []),
+			],
 			social: [
 				{ icon: 'external', label: 'alikuxac.xyz', href: 'https://alikuxac.xyz' },
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/alikuxac' },
@@ -148,11 +182,10 @@ Key Portal Specifications:
 				}),
 			],
 		}),
+		docsSeoIntegration(),
 		sitemap({
 			filter: (page) => !page.includes('/404') && !page.includes('/_llms-txt'),
-			changefreq: 'weekly',
-			priority: 0.7,
-			lastmod: new Date(),
+			serialize: (item) => getSerializedSitemapItem(item),
 		}),
 		disableCloudflareRocketLoader(),
 	],
